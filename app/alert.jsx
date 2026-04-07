@@ -4,6 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import useLocation from "../hooks/useLocation";
 import { sendSOS } from "../services/sosService";
 import useAuth from "../hooks/useAuth";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function Alert() {
   const [time, setTime] = useState(20);
@@ -28,6 +29,7 @@ export default function Alert() {
 
         setSent(true);
         sendSOS(coords, user);
+        router.replace("/home");
         }
     }, 1000);
 
@@ -43,7 +45,7 @@ export default function Alert() {
     <View style={styles.container}>
       
       {/*  Alert Card */}
-      <View style={styles.card}>
+      <LinearGradient colors={["#fd8e63","#ff5f5f"]} style={styles.card}>
         <Text style={styles.title}>Are you safe?</Text>
 
         <Text style={styles.subtitle}>
@@ -60,7 +62,7 @@ export default function Alert() {
 
         {/*  Timer */}
         <Text style={styles.timer}>{time}</Text>
-      </View>
+      </LinearGradient>
 
       {/* Stop Button */}
       <TouchableOpacity style={styles.button} onPress={stopAlert}>
@@ -82,7 +84,6 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     height: "55%",
-    backgroundColor: "#ff5f5f",
     borderBottomLeftRadius:35,
     borderBottomRightRadius:35,
     justifyContent:"center",

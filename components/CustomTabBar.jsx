@@ -12,7 +12,7 @@ export default function CustomTabBar({ state, navigation }) {
     <View style={[styles.containerWrapper, { paddingBottom: insets.bottom + 15 }]}>
       
       {/*Blur Container  */}
-      <BlurView intensity={50} tint="light" style={styles.blurContainer}>
+      <BlurView intensity={100} tint="light" style={styles.blurContainer}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
 

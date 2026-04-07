@@ -8,6 +8,7 @@ import { Alert } from "react-native";
 import useAuth from "../../hooks/useAuth";
 import { collection, getDocs } from "firebase/firestore";
 import { db, auth } from "../../config/firebase";
+ 
 
 export default function Home() {
   const [isOn, setIsOn] = useState(false);
