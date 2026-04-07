@@ -1,9 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useState, useCallback } from "react";
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import useLocation from "../../hooks/useLocation";
 import useShake from "../../hooks/useShake";
+import { Alert } from "react-native";
+import useAuth from "../../hooks/useAuth";
+import { collection, getDocs } from "firebase/firestore";
+import { db, auth } from "../../config/firebase";
 
 export default function Home() {
   const [isOn, setIsOn] = useState(false);
@@ -12,17 +16,52 @@ export default function Home() {
 
   const router = useRouter();
 
+  const { user } = useAuth();
+
+  const [contacts, setContacts] = useState([]);
+
   useShake(() => {
-  if (isOn) {
-    console.log("Collision detected!");
-    router.push("/alert");
-  }
+    if (isOn) {
+      if (!checkContacts()) return;
+
+      console.log("Collision detected!");
+      router.push("/alert");
+    }
 });
+// Fetching The contact from firestore
+  useFocusEffect(
+    useCallback(() => {
+      const fetchContacts = async () => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const snapshot = await getDocs(
+          collection(db, "users", user.uid, "contacts")
+        );
+
+        const list = snapshot.docs.map((doc) => doc.data());
+        setContacts(list);
+      };
+
+      fetchContacts();
+    }, [])
+  );
 
   const openMap = () => {
     if (!coords) return;
     const url = `https://www.google.com/maps?q=${coords.latitude},${coords.longitude}`;
     Linking.openURL(url);
+  };
+
+  const checkContacts = () => {
+    if (!contacts || contacts.length === 0) {
+      Alert.alert(
+        "Add Trusted Contact",
+        "Please provide at least one trusted number before enabling SOS."
+      );
+      return false;
+    }
+    return true;
   };
 
   return (
@@ -42,9 +81,10 @@ export default function Home() {
         </View>
       </TouchableOpacity>
 
-      {/* 🔘 SOS */}
+      {/* SOS */}
       <View style={styles.centerSection}>
-        <TouchableOpacity onPress={() => setIsOn(!isOn)} style={styles.outerCircle}>
+        <TouchableOpacity onPress={() => { if (!isOn) { if (!checkContacts()) return; } setIsOn(!isOn); }} 
+            style={styles.outerCircle}>
           <View style={[styles.innerCircle, { backgroundColor: isOn ? "#39d12f" : "#ff6b4a" }]}>
             <Text style={styles.buttonText}>{isOn ? "ON" : "OFF"}</Text>
           </View>
@@ -55,7 +95,7 @@ export default function Home() {
         style={styles.testButton}
         onPress={() => router.push("/alert")}
     >
-        <Text style={styles.testText}>Test Alert 🚨</Text>
+        <Text style={styles.testText}>Test Alert</Text>
     </TouchableOpacity>
 
     </View>

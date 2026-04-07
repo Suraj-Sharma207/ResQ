@@ -6,10 +6,10 @@ import { sendSOS } from "../services/sosService";
 import useAuth from "../hooks/useAuth";
 
 export default function Alert() {
-  const [time, setTime] = useState(10);
+  const [time, setTime] = useState(20);
   const router = useRouter();
 
-  // 📍 Get live location
+  //Get live location
   const { coords } = useLocation();
   const [sent, setSent] = useState(false);
   const { user, loading } = useAuth();
@@ -17,7 +17,7 @@ export default function Alert() {
    useEffect(() => {
     if (!coords || !user || sent) return;
 
-    let current = 10;
+    let current = 20;
 
     const timer = setInterval(() => {
         current -= 1;
@@ -75,33 +75,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#eaeaea",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
+    
   },
 
   card: {
-    width: "90%",
+    width: "100%",
+    height: "55%",
     backgroundColor: "#ff5f5f",
-    borderRadius: 30,
+    borderBottomLeftRadius:35,
+    borderBottomRightRadius:35,
+    justifyContent:"center",
     padding: 25,
   },
 
   title: {
-    fontSize: 26,
+    fontSize: 44,
     fontWeight: "bold",
     color: "#fff",
     marginBottom: 10,
+    marginTop:60,
   },
 
   subtitle: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: 18,
   },
 
   timer: {
-    fontSize: 100,
+    fontSize: 200,
     fontWeight: "bold",
     color: "#ffd6a5",
-    marginTop: 20,
     textAlign: "center",
   },
 
