@@ -1,11 +1,13 @@
 //Backend
 
-import express from "express";
 import cors from "cors";
-import twilio from "twilio";
 import dotenv from 'dotenv';
+import express from "express";
+import twilio from "twilio";
 
 dotenv.config();
+
+//console.log("SID:", process.env.ACCOUNT_SID);
 
 const app = express();
 app.use(cors());

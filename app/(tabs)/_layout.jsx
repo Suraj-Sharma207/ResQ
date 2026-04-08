@@ -17,7 +17,6 @@ export default function TabsLayout() {
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tabs.Screen name="home" options={{ title: "Home" }} />
-      <Tabs.Screen name="explore" options={{ title: "Explore" }} />
       <Tabs.Screen name="myCircle" options={{ title: "Contacts" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>

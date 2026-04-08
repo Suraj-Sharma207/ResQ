@@ -7,7 +7,7 @@ import useAuth from "../hooks/useAuth";
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function Alert() {
-  const [time, setTime] = useState(20);
+  const [time, setTime] = useState(10);
   const router = useRouter();
 
   //Get live location
@@ -18,7 +18,7 @@ export default function Alert() {
    useEffect(() => {
     if (!coords || !user || sent) return;
 
-    let current = 20;
+    let current = 10;
 
     const timer = setInterval(() => {
         current -= 1;
@@ -29,7 +29,8 @@ export default function Alert() {
 
         setSent(true);
         sendSOS(coords, user);
-        router.replace("/home");
+        
+        setInterval(() => {router.replace("/home")}, 5000);
         }
     }, 1000);
 

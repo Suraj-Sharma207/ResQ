@@ -26,9 +26,6 @@ export default function CustomTabBar({ state, navigation }) {
           } else if (route.name === "myCircle" || route.name.toLowerCase() === "my circle") {
             iconName = "people"; // Closest to the contact book icon in the image
             labelText = "Contacts";
-          } else if (route.name.toLowerCase() === "explore") {
-            iconName = "compass";
-            labelText = "Explore";
           }else if (route.name.toLowerCase() === "profile") {
             iconName = "person-circle-outline";
             labelText = "Profile";

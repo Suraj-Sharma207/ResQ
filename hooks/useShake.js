@@ -8,8 +8,8 @@ export default function useShake(onShake) {
     const subscription = Accelerometer.addListener(({ x, y, z }) => {
       const total = Math.abs(x + y + z);
 
-      if (total > 2.5) {
-        // 🔥 collision threshold
+      if (total > 4.5) {
+        //collision threshold
         onShake();
       }
     });
