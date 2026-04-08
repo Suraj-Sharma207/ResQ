@@ -45,5 +45,5 @@ app-example
 # Expo
 services/
 
-config/
+
 .env

@@ -7,8 +7,10 @@ import useShake from "../../hooks/useShake";
 import { Alert } from "react-native";
 import useAuth from "../../hooks/useAuth";
 import { collection, getDocs } from "firebase/firestore";
-import { db, auth } from "../../config/firebase";
- 
+import { db, auth } from "../../config/firebase"; 
+import { useEffect } from "react";
+import { PermissionsAndroid, Platform } from "react-native";
+import Constants from "expo-constants";
 
 export default function Home() {
   const [isOn, setIsOn] = useState(false);
@@ -20,6 +22,55 @@ export default function Home() {
   const { user } = useAuth();
 
   const [contacts, setContacts] = useState([]);
+
+
+  const toggleSOS = async () => {
+    if (!isOn) {
+      if (!checkContacts()) return;
+
+      const granted = await requestSMSPermission();
+
+      if (!granted) {
+        Alert.alert("Permission required", "Enable SMS permission in settings");
+        return;
+      }
+    }
+
+    setIsOn(prev => !prev);
+  };
+
+  const requestSMSPermission = async () => {
+
+    if (Constants.appOwnership === "expo") {
+      console.log("Expo Go - skipping SMS permission");
+      return true;
+    }
+
+    if (Platform.OS !== "android") return true;
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.SEND_SMS,
+          {
+            title: "SMS Permission",
+            message: "This app needs SMS permission to send emergency alerts.",
+            buttonNeutral: "Ask Me Later",
+            buttonNegative: "Cancel",
+            buttonPositive: "OK",
+          }
+        );
+
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log("Permission Granted");
+          return true;
+          } else {
+            console.log("Permission Denied");
+            return false;
+        }
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+};
 
   useShake(() => {
     if (isOn) {
@@ -64,6 +115,7 @@ export default function Home() {
     }
     return true;
   };
+  
 
   return (
     <View style={[styles.container, { backgroundColor: isOn ? "#39d12f" : "#ff8a5c" }]}>
@@ -84,7 +136,7 @@ export default function Home() {
 
       {/* SOS */}
       <View style={styles.centerSection}>
-        <TouchableOpacity onPress={() => { if (!isOn) { if (!checkContacts()) return; } setIsOn(!isOn); }} 
+        <TouchableOpacity onPress={ toggleSOS} 
             style={styles.outerCircle}>
           <View style={[styles.innerCircle, { backgroundColor: isOn ? "#39d12f" : "#ff6b4a" }]}>
             <Text style={styles.buttonText}>{isOn ? "ON" : "OFF"}</Text>

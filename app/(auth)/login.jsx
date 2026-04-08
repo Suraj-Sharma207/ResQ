@@ -25,7 +25,7 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back 👋</Text>
+      <Text style={styles.title}>Welcome Back</Text>
 
       <TextInput
         placeholder="Email"
