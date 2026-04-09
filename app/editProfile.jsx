@@ -101,7 +101,7 @@ export default function EditProfile() {
 
             const result = await res.json();
 
-            return result.secure_url; // 🔥 this is your image URL
+            return result.secure_url; 
         } catch (err) {
             console.log("Upload Error:", err);
         }

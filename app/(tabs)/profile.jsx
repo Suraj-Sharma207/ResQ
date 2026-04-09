@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
     marginBottom: 15,
-    elevation: 3,
+    elevation: 4,
   },
   title: {
     fontWeight: "bold",
@@ -167,6 +167,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     alignItems: "center",
+    elevation: 3,
   },
   btnText: {
     color: "white",
@@ -182,6 +183,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 20,
+    
   },
 
   btn: {
@@ -190,6 +192,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     marginHorizontal: 5,
+    elevation: 2,
+    
   },
 
   btnText: {
