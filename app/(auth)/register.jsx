@@ -25,7 +25,7 @@ export default function Register() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Account 🚀</Text>
+      <Text style={styles.title}>Create Account</Text>
 
       <TextInput
         placeholder="Email"
@@ -74,6 +74,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     marginBottom: 15,
+    color:"#222",
   },
 
   btn: {

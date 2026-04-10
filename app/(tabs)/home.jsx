@@ -4,12 +4,11 @@ import { useState, useCallback } from "react";
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import useLocation from "../../hooks/useLocation";
 import useShake from "../../hooks/useShake";
-import { Alert } from "react-native";
 import useAuth from "../../hooks/useAuth";
 import { collection, getDocs } from "firebase/firestore";
 import { db, auth } from "../../config/firebase"; 
 import { useEffect } from "react";
-import { PermissionsAndroid, Platform } from "react-native";
+import { PermissionsAndroid, Alert } from "react-native";
 import Constants from "expo-constants";
 
 export default function Home() {
@@ -25,52 +24,36 @@ export default function Home() {
 
 
   const toggleSOS = async () => {
+    console.log("SOS Button Pressed");
     if (!isOn) {
       if (!checkContacts()) return;
-
       const granted = await requestSMSPermission();
-
       if (!granted) {
         Alert.alert("Permission required", "Enable SMS permission in settings");
         return;
       }
     }
-
     setIsOn(prev => !prev);
   };
 
-  const requestSMSPermission = async () => {
-
-    if (Constants.appOwnership === "expo") {
-      console.log("Expo Go - skipping SMS permission");
-      return true;
-    }
-
-    if (Platform.OS !== "android") return true;
+  
+    const requestSMSPermission = async () => {
       try {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.SEND_SMS,
           {
             title: "SMS Permission",
-            message: "This app needs SMS permission to send emergency alerts.",
-            buttonNeutral: "Ask Me Later",
-            buttonNegative: "Cancel",
-            buttonPositive: "OK",
+            message: "App needs SMS permission to send emergency alerts",
+            buttonPositive: "Allow",
           }
         );
 
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log("Permission Granted");
-          return true;
-          } else {
-            console.log("Permission Denied");
-            return false;
-        }
-    } catch (err) {
-      console.warn(err);
-      return false;
-    }
-};
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.log(err);
+        return false;
+      }
+    };
 
   useShake(() => {
     if (isOn) {
@@ -123,13 +106,23 @@ export default function Home() {
       {/* Location */}
       <TouchableOpacity style={styles.topSection} onPress={openMap}>
         <View style={styles.locationCard}>
+          
           <View style={styles.row}>
             <Ionicons name="flash" size={18} color="#ff6b4a" />
-            <View style={{ marginLeft: 8 }}>
+
+            {/*FIXED CONTAINER */}
+            <View style={styles.textContainer}>
               <Text style={styles.locationTitle}>Current location</Text>
-              <Text style={styles.locationText}>{address}</Text>
+              <Text
+                style={styles.locationText}
+                numberOfLines={2}   // LIMIT LINES
+                ellipsizeMode="tail"
+              >
+                {address}
+              </Text>
             </View>
           </View>
+
           <Ionicons name="navigate" size={18} color="#333" />
         </View>
       </TouchableOpacity>
@@ -163,6 +156,7 @@ const styles = StyleSheet.create({
   topSection: {
     marginTop: 60,
     alignItems: "center",
+    marginHorizontal : 15,
   },
 
   locationCard: {
@@ -223,8 +217,34 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
 },
 
-testText: {
-  color: "#fff",
-  fontWeight: "bold",
-},
+  testText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+
+  textContainer: {
+    marginLeft: 8,
+    flex: 1, 
+  },
+
+  locationCard: {
+    backgroundColor: "#eee",
+    padding: 12,
+    borderRadius: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1, 
+  },
+
+  locationText: {
+    fontSize: 13,
+    color: "#333",
+    flexShrink: 1, 
+  },
 });
