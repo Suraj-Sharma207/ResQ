@@ -1,77 +1,131 @@
+// import { Ionicons } from "@expo/vector-icons";
+// import { useRouter, useFocusEffect } from "expo-router";
+// import { useState, useCallback } from "react";
+// import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// import useLocation from "../../hooks/useLocation";
+// import useShake from "../../hooks/useShake";
+// import useAuth from "../../hooks/useAuth";
+// import { collection, getDocs } from "firebase/firestore";
+// import { db, auth } from "../../config/firebase"; 
+// import { useEffect } from "react";
+// import { PermissionsAndroid, Alert } from "react-native";
+// import Constants from "expo-constants";
+
+// export default function Home() {
+//   const [isOn, setIsOn] = useState(false);
+
+//   const { address, coords } = useLocation();
+
+//   const router = useRouter();
+
+//   const { user } = useAuth();
+
+//   const [contacts, setContacts] = useState([]);
+
+
+//   const toggleSOS = async () => {
+//     console.log("SOS Button Pressed");
+//     if (!isOn) {
+//       if (!checkContacts()) return;
+//       const granted = await requestSMSPermission();
+//       if (!granted) {
+//         Alert.alert("Permission required", "Enable SMS permission in settings");
+//         return;
+//       }
+//     }
+//     setIsOn(prev => !prev);
+//   };
+
+  
+//     const requestSMSPermission = async () => {
+//       try {
+//         const granted = await PermissionsAndroid.request(
+//           PermissionsAndroid.PERMISSIONS.SEND_SMS,
+//           {
+//             title: "SMS Permission",
+//             message: "App needs SMS permission to send emergency alerts",
+//             buttonPositive: "Allow",
+//           }
+//         );
+
+//         return granted === PermissionsAndroid.RESULTS.GRANTED;
+//       } catch (err) {
+//         console.log(err);
+//         return false;
+//       }
+//     };
+
+//   useShake(() => {
+//     if (isOn) {
+//       if (!checkContacts()) return;
+
+//       console.log("Collision detected!");
+//       router.push("/alert");
+//     }
+// }, isOn);
+// // Fetching The contact from firestore
+//   useFocusEffect(
+//     useCallback(() => {
+//       const fetchContacts = async () => {
+//         const user = auth.currentUser;
+//         if (!user) return;
+
+//         const snapshot = await getDocs(
+//           collection(db, "users", user.uid, "contacts")
+//         );
+
+//         const list = snapshot.docs.map((doc) => doc.data());
+//         setContacts(list);
+//       };
+
+//       fetchContacts();
+//     }, [])
+//   );
+
+//   const openMap = () => {
+//     if (!coords) return;
+//     const url = `https://www.google.com/maps?q=${coords.latitude},${coords.longitude}`;
+//     Linking.openURL(url);
+//   };
+
+//   const checkContacts = () => {
+//     if (!contacts || contacts.length === 0) {
+//       Alert.alert(
+//         "Add Trusted Contact",
+//         "Please provide at least one trusted number before enabling SOS."
+//       );
+//       return false;
+//     }
+//     return true;
+//   };
+
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useState, useCallback } from "react";
-import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Linking, StyleSheet, Text, TouchableOpacity, View, PermissionsAndroid, Alert, Platform } from "react-native";
 import useLocation from "../../hooks/useLocation";
 import useShake from "../../hooks/useShake";
 import useAuth from "../../hooks/useAuth";
 import { collection, getDocs } from "firebase/firestore";
 import { db, auth } from "../../config/firebase"; 
-import { useEffect } from "react";
-import { PermissionsAndroid, Alert } from "react-native";
-import Constants from "expo-constants";
+import { sendSMS } from "../../services/smsService"; // Import your service
 
 export default function Home() {
   const [isOn, setIsOn] = useState(false);
-
   const { address, coords } = useLocation();
-
   const router = useRouter();
-
   const { user } = useAuth();
-
   const [contacts, setContacts] = useState([]);
 
-
-  const toggleSOS = async () => {
-    console.log("SOS Button Pressed");
-    if (!isOn) {
-      if (!checkContacts()) return;
-      const granted = await requestSMSPermission();
-      if (!granted) {
-        Alert.alert("Permission required", "Enable SMS permission in settings");
-        return;
-      }
-    }
-    setIsOn(prev => !prev);
-  };
-
-  
-    const requestSMSPermission = async () => {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.SEND_SMS,
-          {
-            title: "SMS Permission",
-            message: "App needs SMS permission to send emergency alerts",
-            buttonPositive: "Allow",
-          }
-        );
-
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.log(err);
-        return false;
-      }
-    };
-
-  useShake(() => {
-    if (isOn) {
-      if (!checkContacts()) return;
-
-      console.log("Collision detected!");
-      router.push("/alert");
-    }
-});
-// Fetching The contact from firestore
+  // Fetch Contacts
   useFocusEffect(
     useCallback(() => {
       const fetchContacts = async () => {
-        const user = auth.currentUser;
-        if (!user) return;
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
 
         const snapshot = await getDocs(
-          collection(db, "users", user.uid, "contacts")
+          collection(db, "users", currentUser.uid, "contacts")
         );
 
         const list = snapshot.docs.map((doc) => doc.data());
@@ -82,17 +136,65 @@ export default function Home() {
     }, [])
   );
 
+  const requestSMSPermission = async () => {
+    if (Platform.OS !== 'android') return true; // PermissionsAndroid is Android-only
+    
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.SEND_SMS,
+        {
+          title: "SMS Permission",
+          message: "This app needs permission to send automatic background SMS during emergencies.",
+          buttonPositive: "Allow",
+        }
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  };
+
+  const toggleSOS = async () => {
+    if (!isOn) {
+      if (!checkContacts()) return;
+      const granted = await requestSMSPermission();
+      if (!granted) {
+        Alert.alert("Permission Denied", "Automatic SOS requires SMS permissions. Please enable them in settings.");
+        return;
+      }
+    }
+    setIsOn(prev => !prev);
+  };
+
+  useShake(() => {
+    if (isOn) {
+      if (!checkContacts()) return;
+
+      console.log("Collision detected! Triggering Auto-SMS.");
+      
+      // TRIGGER AUTOMATIC SMS
+      const phoneNumbers = contacts.map(c => c.phone);
+      const message = `EMERGENCY! I've been in a collision. My location: ${address || "Unknown"}`;
+      
+      sendSMS(phoneNumbers, message); // This uses your native service
+      
+      router.push("/alert");
+    }
+  });
+
   const openMap = () => {
     if (!coords) return;
-    const url = `https://www.google.com/maps?q=${coords.latitude},${coords.longitude}`;
+    // Fixed URL syntax
+    const url = `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`;
     Linking.openURL(url);
   };
 
   const checkContacts = () => {
     if (!contacts || contacts.length === 0) {
       Alert.alert(
-        "Add Trusted Contact",
-        "Please provide at least one trusted number before enabling SOS."
+        "No Contacts Found",
+        "Please add at least one trusted contact before enabling SOS mode."
       );
       return false;
     }

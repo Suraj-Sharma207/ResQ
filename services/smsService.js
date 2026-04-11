@@ -1,19 +1,27 @@
 import { Platform } from "react-native";
 
 export const sendSMS = async (contacts, message) => {
-  if (Platform.OS === "android") {
-    // Native SMS (AUTO SEND)
+  if (Platform.OS !== "android") {
+    console.log("SMS only works on Android");
+    return;
+  }
+
+  // Use a try-catch to prevent crashes if the module is missing
+  try {
     const SmsAndroid = require("react-native-get-sms-android");
 
-    contacts.forEach((number) => {
+    contacts.forEach((contact) => {
+      // Ensure you are passing the phone number string, not the contact object
+      const phoneNumber = typeof contact === 'object' ? contact.phone : contact;
+
       SmsAndroid.autoSend(
-        number,
+        phoneNumber,
         message,
-        (fail) => console.log("SMS Failed:", fail),
-        (success) => console.log("SMS Sent:", success)
+        (fail) => console.log("SMS Failed for " + phoneNumber, fail),
+        (success) => console.log("SMS Sent to " + phoneNumber, success)
       );
     });
-  } else {
-    console.log("SMS only works on Android");
+  } catch (error) {
+    console.error("Native SMS module not found.", error);
   }
 };
