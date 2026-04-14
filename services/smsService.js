@@ -16,8 +16,10 @@ export const sendSMS = async (contacts, message) => {
         // Call your custom Kotlin code!
         await sendDirectSms(cleanNumber, finalMessage);
         console.log(`Successfully silently sent to ${cleanNumber}`);
+        alert(`SMS sent from ${cleanNumber}`)
       } catch (err) {
         console.log(`Failed for ${cleanNumber}:`, err);
+         alert(`SMS faild from ${cleanNumber}`,err)
       }
     });
   } catch (error) {
