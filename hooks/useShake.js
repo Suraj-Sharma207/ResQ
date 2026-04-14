@@ -31,7 +31,7 @@ export default function useShake(onShake, active) {
       // Magnitude calculation (more accurate than abs(x+y+z))
       const totalForce = Math.sqrt(x ** 2 + y ** 2 + z ** 2);
 
-      if (totalForce > 5.0) { 
+      if (totalForce > 2.0) { 
         onShake();
       }
     });

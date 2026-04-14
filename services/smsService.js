@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { Platform, Alert } from "react-native";
 
 export const sendSMS = async (contacts, message) => {
   if (Platform.OS !== "android") {
@@ -6,22 +6,43 @@ export const sendSMS = async (contacts, message) => {
     return;
   }
 
-  // Use a try-catch to prevent crashes if the module is missing
   try {
     const SmsAndroid = require("react-native-get-sms-android");
 
+    if (!contacts || contacts.length === 0) {
+      console.log("No contacts provided to sendSMS");
+      return;
+    }
+
     contacts.forEach((contact) => {
-      // Ensure you are passing the phone number string, not the contact object
-      const phoneNumber = typeof contact === 'object' ? contact.phone : contact;
+      // 1. Get the raw number
+      let rawNumber = typeof contact === 'object' ? contact.phone : contact;
+
+      // 2. CLEAN the number (Keep only numbers and the '+' sign)
+      const phoneNumber = String(rawNumber).replace(/[^\d+]/g, "");
+
+      // 3. Ensure message is not empty (Android rejects empty SMS)
+      const finalMessage = message || "Emergency SOS Alert!";
+
+      console.log(`Attempting autoSend to: ${phoneNumber}`);
 
       SmsAndroid.autoSend(
         phoneNumber,
-        message,
-        (fail) => console.log("SMS Failed for " + phoneNumber, fail),
-        (success) => console.log("SMS Sent to " + phoneNumber, success)
+        finalMessage,
+        (fail) => {
+          console.log("SMS Failed:", fail);
+          // ALERT TO PHONE SCREEN FOR DEBUGGING
+          Alert.alert("SMS Failed", `To: ${phoneNumber} Error: ${fail}`);
+        },
+        (success) => {
+          console.log("SMS Success:", success);
+          // ALERT TO PHONE SCREEN FOR DEBUGGING
+          Alert.alert("SMS Sent!", `Message delivered to ${phoneNumber}`);
+        }
       );
     });
   } catch (error) {
+    Alert.alert("Module Error", "Native SMS module not found in this build.");
     console.error("Native SMS module not found.", error);
   }
 };
