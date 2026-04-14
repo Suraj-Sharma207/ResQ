@@ -1,5 +1,5 @@
 import { Platform, Alert } from "react-native";
-import { sendDirectSms } from "../../modules/expo-direct-sms"; // Import YOUR module
+import { sendDirectSms } from "../modules/expo-direct-sms"; // Import YOUR module
 
 export const sendSMS = async (contacts, message) => {
   if (Platform.OS !== "android") return;
