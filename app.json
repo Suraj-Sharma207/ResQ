@@ -14,7 +14,8 @@
     "android": {
       "permissions": [
         "android.permission.SEND_SMS",
-        "android.permission.INTERNET"
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",

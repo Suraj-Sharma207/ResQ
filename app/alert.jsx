@@ -1,48 +1,102 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Vibration } from "react-native";
 import useLocation from "../hooks/useLocation";
 import { sendSOS } from "../services/sosService";
 import useAuth from "../hooks/useAuth";
 import { LinearGradient } from "expo-linear-gradient";
+import { Audio } from "expo-av";
 
 export default function Alert() {
   const [time, setTime] = useState(10);
   const router = useRouter();
+  const [sound, setSound] = useState();
+
+  // vibration pattern: [Wait time, Vibrate time, Wait time, Vibrate time...]
+  const VIBRATION_PATTERN = [0, 500, 200, 500];
 
   //Get live location
   const { coords } = useLocation();
   const [sent, setSent] = useState(false);
   const { user, loading } = useAuth();
 
-   useEffect(() => {
-    if (!coords || !user || sent) return;
+  const coordsRef = useRef(coords);
+
+  useEffect(() => {
+    coordsRef.current = coords;
+  }, [coords]);
+
+  // --- TIMER & SOS LOGIC ---
+  useEffect(() => {
+    if (!user || sent) return;
 
     let current = 10;
 
     const timer = setInterval(() => {
-        current -= 1;
-        setTime(current);
+      // 4. THE FIX: Use React's previous state instead of a local 'current' variable
+      setTime((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(timer);
+          setSent(true);
+          
+          // Grab the latest location directly from the ref!
+          sendSOS(coordsRef.current, user);
+          
+          setTimeout(() => {
+            handleStopAlert(); 
+            router.replace("/home");
+          }, 5000);
 
-        if (current <= 0) {
-        clearInterval(timer);
-
-        setSent(true);
-        sendSOS(coords, user);
-        
-        setInterval(() => {router.replace("/home")}, 5000);
+          return 0; // Lock the timer at 0 visually
         }
+        return prevTime - 1; // Count down safely
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-    }, [coords, user, sent]);
+  }, [user, sent]);
 
-  //  Stop Alert
-  const stopAlert = () => {
-    router.back();
+  // --- SIREN & VIBRATION LOGIC ---
+  useEffect(() => {
+    let currentSound; // 4. FIXED: Local reference for reliable cleanup
+
+    Vibration.vibrate(VIBRATION_PATTERN, true);
+
+    async function playSiren() {
+      try {
+        const { sound: audioSound } = await Audio.Sound.createAsync(
+          require('../assets/siren.mp3') // Adjust path if needed
+        );
+        currentSound = audioSound; // Store it locally for the cleanup function
+        setSound(audioSound); // Store it in state for the manual stop button
+        
+        await audioSound.setIsLoopingAsync(true);
+        await audioSound.playAsync();
+      } catch (error) {
+        console.error("Error playing sound:", error);
+      }
+    }
+
+    playSiren();
+
+    // CLEANUP: Runs when the component unmounts
+    return () => {
+      Vibration.cancel();
+      if (currentSound) {
+        currentSound.unloadAsync(); // safely unload using the local reference
+      }
+    };
+  }, []); 
+
+  // --- MANUAL STOP BUTTON ---
+  const handleStopAlert = async () => {
+    Vibration.cancel();
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync(); // Unload to free up phone memory
+    }
+    router.back(); 
   };
-
-
   
   return (
     <View style={styles.container}>
