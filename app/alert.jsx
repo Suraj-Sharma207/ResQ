@@ -37,8 +37,9 @@ export default function Alert() {
           setSent(true);
           sendSOS(coordsRef.current, user);
           setTimeout(() => {
+            safeStopAlert();
             handleStopAlert();
-            router.replace("/home");
+            router.replace("/profile");
           }, 3000);
 
           return 0;
@@ -53,13 +54,22 @@ export default function Alert() {
   // --- SIREN & VIBRATION LOGIC ---
   useEffect(() => {
     Vibration.vibrate(VIBRATION_PATTERN, true);
+    sirenPlayer.loop = true;
     sirenPlayer.play();
 
     return () => {
       Vibration.cancel();
-      sirenPlayer.pause();
     };
   }, []);
+
+  const safeStopAlert = () => {
+    Vibration.cancel();
+    try {
+      sirenPlayer.pause();
+    } catch (error) {
+      console.log("Player already released, safe to ignore.");
+    }
+  };
 
   // --- MANUAL STOP BUTTON ---
   const handleStopAlert = () => {
@@ -92,7 +102,7 @@ export default function Alert() {
       </LinearGradient>
 
       {/* Stop Button */}
-      <TouchableOpacity style={styles.button} onPress={stopAlert}>
+      <TouchableOpacity style={styles.button} onPress={handleStopAlert}>
         <Text style={styles.buttonText}>Stop Alert</Text>
       </TouchableOpacity>
     </View>

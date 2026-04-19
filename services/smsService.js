@@ -1,4 +1,4 @@
-import { Platform, Alert } from "react-native";
+import { Platform } from "react-native";
 import { sendDirectSms } from "../modules/expo-direct-sms"; // Import YOUR module
 
 export const sendSMS = async (contacts, message) => {
@@ -16,10 +16,10 @@ export const sendSMS = async (contacts, message) => {
         // Call your custom Kotlin code!
         await sendDirectSms(cleanNumber, finalMessage);
         console.log(`Successfully silently sent to ${cleanNumber}`);
-        alert(`SMS sent from ${cleanNumber}`)
+        //alert(`SMS sent from ${cleanNumber}`)
       } catch (err) {
         console.log(`Failed for ${cleanNumber}:`, err);
-         alert(`SMS faild from ${cleanNumber}`,err)
+        // alert(`SMS faild from ${cleanNumber}`,err)
       }
     });
   } catch (error) {
