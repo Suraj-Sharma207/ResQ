@@ -1,19 +1,19 @@
+import { useAudioPlayer } from "expo-audio";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View, Vibration } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
+import useAuth from "../hooks/useAuth";
 import useLocation from "../hooks/useLocation";
 import { sendSOS } from "../services/sosService";
-import useAuth from "../hooks/useAuth";
-import { LinearGradient } from "expo-linear-gradient";
-import { Audio } from "expo-av";
 
 export default function Alert() {
-  const [time, setTime] = useState(10);
+  const [time, setTime] = useState(30);
   const router = useRouter();
-  const [sound, setSound] = useState();
 
   // vibration pattern: [Wait time, Vibrate time, Wait time, Vibrate time...]
   const VIBRATION_PATTERN = [0, 500, 200, 500];
+  const sirenPlayer = useAudioPlayer(require('../assets/siren.mp3'));
 
   //Get live location
   const { coords } = useLocation();
@@ -30,26 +30,20 @@ export default function Alert() {
   useEffect(() => {
     if (!user || sent) return;
 
-    let current = 10;
-
     const timer = setInterval(() => {
-      // 4. THE FIX: Use React's previous state instead of a local 'current' variable
       setTime((prevTime) => {
         if (prevTime <= 1) {
           clearInterval(timer);
           setSent(true);
-          
-          // Grab the latest location directly from the ref!
           sendSOS(coordsRef.current, user);
-          
           setTimeout(() => {
-            handleStopAlert(); 
+            handleStopAlert();
             router.replace("/home");
-          }, 5000);
+          }, 3000);
 
-          return 0; // Lock the timer at 0 visually
+          return 0;
         }
-        return prevTime - 1; // Count down safely
+        return prevTime - 1;
       });
     }, 1000);
 
@@ -58,55 +52,31 @@ export default function Alert() {
 
   // --- SIREN & VIBRATION LOGIC ---
   useEffect(() => {
-    let currentSound; // 4. FIXED: Local reference for reliable cleanup
-
     Vibration.vibrate(VIBRATION_PATTERN, true);
+    sirenPlayer.play();
 
-    async function playSiren() {
-      try {
-        const { sound: audioSound } = await Audio.Sound.createAsync(
-          require('../assets/siren.mp3') // Adjust path if needed
-        );
-        currentSound = audioSound; // Store it locally for the cleanup function
-        setSound(audioSound); // Store it in state for the manual stop button
-        
-        await audioSound.setIsLoopingAsync(true);
-        await audioSound.playAsync();
-      } catch (error) {
-        console.error("Error playing sound:", error);
-      }
-    }
-
-    playSiren();
-
-    // CLEANUP: Runs when the component unmounts
     return () => {
       Vibration.cancel();
-      if (currentSound) {
-        currentSound.unloadAsync(); // safely unload using the local reference
-      }
+      sirenPlayer.pause();
     };
-  }, []); 
+  }, []);
 
   // --- MANUAL STOP BUTTON ---
-  const handleStopAlert = async () => {
+  const handleStopAlert = () => {
     Vibration.cancel();
-    if (sound) {
-      await sound.stopAsync();
-      await sound.unloadAsync(); // Unload to free up phone memory
-    }
-    router.back(); 
+    sirenPlayer.pause();
+    router.back();
   };
-  
+
   return (
     <View style={styles.container}>
-      
+
       {/*  Alert Card */}
-      <LinearGradient colors={["#fd8e63","#ff5f5f"]} style={styles.card}>
+      <LinearGradient colors={["#fd8e63", "#ff5f5f"]} style={styles.card}>
         <Text style={styles.title}>Are you safe?</Text>
 
         <Text style={styles.subtitle}>
-          We detected unusual movement 
+          We detected unusual movement
         </Text>
 
         <Text style={styles.subtitle}>
@@ -135,15 +105,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#eaeaea",
     alignItems: "center",
     justifyContent: "flex-start",
-    
+
   },
 
   card: {
     width: "100%",
     height: "55%",
-    borderBottomLeftRadius:35,
-    borderBottomRightRadius:35,
-    justifyContent:"center",
+    borderBottomLeftRadius: 35,
+    borderBottomRightRadius: 35,
+    justifyContent: "center",
     padding: 25,
   },
 
@@ -152,7 +122,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
     marginBottom: 10,
-    marginTop:60,
+    marginTop: 60,
   },
 
   subtitle: {
