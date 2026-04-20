@@ -1,41 +1,36 @@
-// import { useEffect } from "react";
-// import { Accelerometer } from "expo-sensors";
-
-// export default function useShake(onShake) {
-//   useEffect(() => {
-//     Accelerometer.setUpdateInterval(300);
-
-//     const subscription = Accelerometer.addListener(({ x, y, z }) => {
-//       const total = Math.abs(x + y + z);
-
-//       if (total > 4.5) {
-//         //collision threshold
-//         onShake();
-//       }
-//     });
-
-//     return () => subscription.remove();
-//   }, []);
-// }
-
-import { useEffect } from "react";
 import { Accelerometer } from "expo-sensors";
+import { useEffect, useRef } from "react";
 
 export default function useShake(onShake, active) {
-  useEffect(() => {
-    if (!active) return; // If SOS is OFF, do nothing.
 
-    Accelerometer.setUpdateInterval(100);
+  const isProcessing = useRef(false);
+
+  useEffect(() => {
+    if (!active) {
+      isProcessing.current = false;
+      return;
+    }
+
+    Accelerometer.setUpdateInterval(200);
 
     const subscription = Accelerometer.addListener(({ x, y, z }) => {
-      // Magnitude calculation (more accurate than abs(x+y+z))
       const totalForce = Math.sqrt(x ** 2 + y ** 2 + z ** 2);
 
-      if (totalForce > 2.0) { 
+      const pureImpact = Math.abs(totalForce - 1);
+
+      if (pureImpact > 3.0 && !isProcessing.current) {
+        console.log("COLLISION DETECTED! Impact Force:", pureImpact);
+
+        isProcessing.current = true;
+
         onShake();
+
+        setTimeout(() => {
+          isProcessing.current = false;
+        }, 10000);
       }
     });
 
     return () => subscription.remove();
-  }, [active, onShake]); // Hook re-runs when active state changes
+  }, [active, onShake]);
 }
