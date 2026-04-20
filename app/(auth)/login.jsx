@@ -1,7 +1,7 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
-import { useState } from "react";
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { useState } from "react";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { auth } from "../../config/firebase";
 
 export default function Login() {
@@ -29,6 +29,7 @@ export default function Login() {
 
       <TextInput
         placeholder="Email"
+        placeholderTextColor="#777"
         value={email}
         onChangeText={setEmail}
         style={styles.input}
@@ -36,6 +37,7 @@ export default function Login() {
 
       <TextInput
         placeholder="Password"
+        placeholderTextColor="#777"
         value={password}
         onChangeText={setPassword}
         secureTextEntry

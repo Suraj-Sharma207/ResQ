@@ -9,25 +9,22 @@ export default function useShake(onCrash, active) {
   const currentSpeed = useRef(0);
   const prevSpeed = useRef(0);
 
-  // 🚨 TEMPORARY DEVELOPER TEST START 🚨
-  useEffect(() => {
-    if (!active) return;
+  //TEMPORARY DEVELOPER TEST START
+  // useEffect(() => {
+  //   if (!active) return;
 
-    // After 10 seconds, fake a massive car crash
-    const devTimer = setTimeout(() => {
-      console.log("DEV TEST: Faking a 60km/h crash!");
-      prevSpeed.current = 20; // 20 m/s (approx 70 km/h)
-      currentSpeed.current = 0; // Instant stop
+  //   // After 10 seconds, fake a massive car crash
+  //   const devTimer = setTimeout(() => {
+  //     console.log("DEV TEST: Faking a 60km/h crash!");
 
-      // Manually trigger the crash logic
-      if (prevSpeed.current > 8 && currentSpeed.current < 1) {
-        triggerCrash();
-      }
-    }, 10000);
+  //     // We don't even need the math logic here, just manually trigger the alarm!
+  //     onCrash();
 
-    return () => clearTimeout(devTimer);
-  }, [active]);
-  // 🚨 TEMPORARY DEVELOPER TEST END 🚨
+  //   }, 10000);
+
+  //   return () => clearTimeout(devTimer);
+  // }, [active, onCrash]);
+  //TEMPORARY DEVELOPER TEST END 
 
 
   useEffect(() => {

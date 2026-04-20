@@ -1,12 +1,13 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { useCallback, useState } from "react";
-import { Alert, Linking, PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Linking, PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View, } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../config/firebase";
+import { signOut } from "firebase/auth";
 import useAuth from "../../hooks/useAuth";
 import useLocation from "../../hooks/useLocation";
-import useShake from "../../hooks/useShake"; // Or useSmartCrashDetection if you swapped it
-// Note: Removed sendSMS import from here since the Alert screen handles it now!
+import useShake from "../../hooks/useShake";
 
 export default function Home() {
   const [isOn, setIsOn] = useState(false);
@@ -14,14 +15,22 @@ export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
   const [contacts, setContacts] = useState([]);
+  const [userData, setUserData] = useState({});
 
-  // Fetch Contacts
+  // Fetch Contacts & User Data
   useFocusEffect(
     useCallback(() => {
-      const fetchContacts = async () => {
+      const fetchData = async () => {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
 
+        // Fetch User Data
+        const userSnap = await getDoc(doc(db, "users", currentUser.uid));
+        if (userSnap.exists()) {
+          setUserData(userSnap.data());
+        }
+
+        // Fetch Contacts
         const snapshot = await getDocs(
           collection(db, "users", currentUser.uid, "contacts")
         );
@@ -30,7 +39,7 @@ export default function Home() {
         setContacts(list);
       };
 
-      fetchContacts();
+      fetchData();
     }, [])
   );
 
@@ -92,6 +101,16 @@ export default function Home() {
     }
     return true;
   };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
 

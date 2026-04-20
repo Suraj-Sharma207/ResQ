@@ -6,8 +6,7 @@ import { Alert, Linking, PermissionsAndroid, Platform, StyleSheet, Text, Touchab
 import { auth, db } from "../../config/firebase";
 import useAuth from "../../hooks/useAuth";
 import useLocation from "../../hooks/useLocation";
-import useShake from "../../hooks/useShake"; // Or useSmartCrashDetection if you swapped it
-// Note: Removed sendSMS import from here since the Alert screen handles it now!
+import useShake from "../../hooks/useShake";
 
 export default function Home() {
   const [isOn, setIsOn] = useState(false);
