@@ -7,24 +7,46 @@ import useAuth from "../hooks/useAuth";
 import useLocation from "../hooks/useLocation";
 import { sendSOS } from "../services/sosService";
 
+// 1. IMPORT MISSING SMS AND FIREBASE SERVICES
+import { collection, getDocs } from "firebase/firestore";
+import { auth, db } from "../config/firebase";
+import { sendSMS } from "../services/smsService";
+
 export default function Alert() {
   const [time, setTime] = useState(30);
   const router = useRouter();
 
-  // vibration pattern: [Wait time, Vibrate time, Wait time, Vibrate time...]
   const VIBRATION_PATTERN = [0, 500, 200, 500];
   const sirenPlayer = useAudioPlayer(require('../assets/siren.mp3'));
 
-  //Get live location
   const { coords } = useLocation();
   const [sent, setSent] = useState(false);
   const { user, loading } = useAuth();
 
+  // State to hold emergency contacts
+  const [contacts, setContacts] = useState([]);
   const coordsRef = useRef(coords);
 
   useEffect(() => {
     coordsRef.current = coords;
   }, [coords]);
+
+  // 2. FETCH CONTACTS IN THE BACKGROUND
+  // While the 30 seconds are ticking down, we silently load the contacts
+  useEffect(() => {
+    const fetchContacts = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const snapshot = await getDocs(
+        collection(db, "users", currentUser.uid, "contacts")
+      );
+      const list = snapshot.docs.map((doc) => doc.data());
+      setContacts(list);
+    };
+
+    fetchContacts();
+  }, []);
 
   // --- TIMER & SOS LOGIC ---
   useEffect(() => {
@@ -35,10 +57,29 @@ export default function Alert() {
         if (prevTime <= 1) {
           clearInterval(timer);
           setSent(true);
+
+          // 3. SEND FIREBASE ALERT
           sendSOS(coordsRef.current, user);
+
+          // 4. SEND BACKGROUND SMS TO ALL CONTACTS
+          if (contacts.length > 0) {
+            const phoneNumbers = contacts.map(c => c.phone);
+
+            // Generate a clean Google Maps link using the ref coordinates
+            const lat = coordsRef.current?.latitude;
+            const lon = coordsRef.current?.longitude;
+            const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+
+            const message = `EMERGENCY! I need help. My location: ${mapLink}`;
+
+            console.log("Sending Auto-SMS to:", phoneNumbers);
+            sendSMS(phoneNumbers, message);
+          }
+
+          // 5. NAVIGATION FIX
+          // Removed handleStopAlert() from here so it doesn't conflict with replace()
           setTimeout(() => {
             safeStopAlert();
-            handleStopAlert();
             router.replace("/profile");
           }, 3000);
 
@@ -49,7 +90,7 @@ export default function Alert() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, sent]);
+  }, [user, sent, contacts]); // Added 'contacts' to dependency array
 
   // --- SIREN & VIBRATION LOGIC ---
   useEffect(() => {
@@ -73,8 +114,7 @@ export default function Alert() {
 
   // --- MANUAL STOP BUTTON ---
   const handleStopAlert = () => {
-    Vibration.cancel();
-    sirenPlayer.pause();
+    safeStopAlert(); // Use the safe stop logic here too
     router.back();
   };
 
