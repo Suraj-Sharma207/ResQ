@@ -60,7 +60,7 @@ export default function useShake(onCrash, active) {
         }
       );
 
-      // --- 2. START ACCELEROMETER ---
+      // ---  START ACCELEROMETER ---
       Accelerometer.setUpdateInterval(200);
       accelSubscription = Accelerometer.addListener(({ x, y, z }) => {
         const totalForce = Math.sqrt(x ** 2 + y ** 2 + z ** 2);
