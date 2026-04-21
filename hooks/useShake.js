@@ -4,28 +4,8 @@ import { useEffect, useRef } from "react";
 
 export default function useShake(onCrash, active) {
   const isProcessing = useRef(false);
-
-  // We use refs so the sensors can share data instantly without re-rendering the screen
   const currentSpeed = useRef(0);
   const prevSpeed = useRef(0);
-
-  //TEMPORARY DEVELOPER TEST START
-  // useEffect(() => {
-  //   if (!active) return;
-
-  //   // After 10 seconds, fake a massive car crash
-  //   const devTimer = setTimeout(() => {
-  //     console.log("DEV TEST: Faking a 60km/h crash!");
-
-  //     // We don't even need the math logic here, just manually trigger the alarm!
-  //     onCrash();
-
-  //   }, 10000);
-
-  //   return () => clearTimeout(devTimer);
-  // }, [active, onCrash]);
-  //TEMPORARY DEVELOPER TEST END 
-
 
   useEffect(() => {
     if (!active) {
@@ -70,7 +50,7 @@ export default function useShake(onCrash, active) {
         // They must experience high impact AND be moving at a walking/jogging speed
         if (
           pureImpact > 3.0 &&               // Hard impact
-          currentSpeed.current > 0.5 &&     // Faster than standing still
+          currentSpeed.current > 0.7 &&     // Faster than standing still
           currentSpeed.current < 6.0 &&     // Slower than a car
           !isProcessing.current
         ) {

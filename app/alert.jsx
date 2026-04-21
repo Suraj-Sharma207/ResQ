@@ -3,15 +3,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
-// import useAuth from "../hooks/useAuth";
 import useLocation from "../hooks/useLocation";
 import { sendSOS } from "../services/sosService";
 import { getLocalContacts } from "../services/storageService";
 import { sendSMS } from "../services/smsService";
-
-// 1. IMPORT MISSING SMS AND FIREBASE SERVICES
-// import { collection, getDocs } from "firebase/firestore";
-// import { auth, db } from "../config/firebase";
 
 export default function Alert() {
   const [time, setTime] = useState(30);
@@ -22,7 +17,7 @@ export default function Alert() {
 
   const { coords } = useLocation();
   const [sent, setSent] = useState(false);
-  // const { user, loading } = useAuth();
+  
 
   // State to hold emergency contacts
   const [contacts, setContacts] = useState([]);
