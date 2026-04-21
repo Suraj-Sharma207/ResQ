@@ -3,14 +3,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
-import useAuth from "../hooks/useAuth";
+// import useAuth from "../hooks/useAuth";
 import useLocation from "../hooks/useLocation";
 import { sendSOS } from "../services/sosService";
+import { getLocalContacts } from "../services/storageService";
+import { sendSMS } from "../services/smsService";
 
 // 1. IMPORT MISSING SMS AND FIREBASE SERVICES
-import { collection, getDocs } from "firebase/firestore";
-import { auth, db } from "../config/firebase";
-import { sendSMS } from "../services/smsService";
+// import { collection, getDocs } from "firebase/firestore";
+// import { auth, db } from "../config/firebase";
 
 export default function Alert() {
   const [time, setTime] = useState(30);
@@ -21,7 +22,7 @@ export default function Alert() {
 
   const { coords } = useLocation();
   const [sent, setSent] = useState(false);
-  const { user, loading } = useAuth();
+  // const { user, loading } = useAuth();
 
   // State to hold emergency contacts
   const [contacts, setContacts] = useState([]);
@@ -31,26 +32,18 @@ export default function Alert() {
     coordsRef.current = coords;
   }, [coords]);
 
-  // 2. FETCH CONTACTS IN THE BACKGROUND
-  // While the 30 seconds are ticking down, we silently load the contacts
+// 2. FETCH CONTACTS LOCALLY WHILE TIMER TICKS
   useEffect(() => {
     const fetchContacts = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-
-      const snapshot = await getDocs(
-        collection(db, "users", currentUser.uid, "contacts")
-      );
-      const list = snapshot.docs.map((doc) => doc.data());
-      setContacts(list);
+      const localContacts = await getLocalContacts();
+      setContacts(localContacts);
     };
-
     fetchContacts();
   }, []);
 
   // --- TIMER & SOS LOGIC ---
   useEffect(() => {
-    if (!user || sent) return;
+    if (sent) return;
 
     const timer = setInterval(() => {
       setTime((prevTime) => {
@@ -58,14 +51,9 @@ export default function Alert() {
           clearInterval(timer);
           setSent(true);
 
-          // 3. SEND FIREBASE ALERT
-          sendSOS(coordsRef.current, user);
-
           // 4. SEND BACKGROUND SMS TO ALL CONTACTS
           if (contacts.length > 0) {
             const phoneNumbers = contacts.map(c => c.phone);
-
-            // Generate a clean Google Maps link using the ref coordinates
             const lat = coordsRef.current?.latitude;
             const lon = coordsRef.current?.longitude;
             const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
@@ -90,7 +78,7 @@ export default function Alert() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, sent, contacts]); // Added 'contacts' to dependency array
+  }, [sent, contacts]); // Added 'contacts' to dependency array
 
   // --- SIREN & VIBRATION LOGIC ---
   useEffect(() => {

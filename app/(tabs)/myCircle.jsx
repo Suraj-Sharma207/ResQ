@@ -1,54 +1,60 @@
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
-import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { db, auth } from "../../config/firebase";
 import { SafeAreaView } from "react-native-safe-area-context";
+// 1. Import our new local storage service instead of Firebase
+import { getLocalContacts, saveLocalContacts } from "../../services/storageService";
 
 export default function MyCircle() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [contacts, setContacts] = useState([]);
 
-  const user = auth.currentUser;
-
+  // Load contacts the second the screen opens
   useEffect(() => {
     fetchContacts();
   }, []);
 
-  // Fetch contacts
+  // --- 1. FETCH CONTACTS (Local Storage) ---
   const fetchContacts = async () => {
-    if (!user) return;
-
-    const snapshot = await getDocs(
-      collection(db, "users", user.uid, "contacts")
-    );
-
-    const list = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    setContacts(list);
+    const localContacts = await getLocalContacts();
+    setContacts(localContacts);
   };
 
-  // Add contact
+  // --- 2. ADD CONTACT (Local Storage) ---
   const addContact = async () => {
-    if (!name || !phone) return;
+    if (!name.trim() || !phone.trim()) return;
 
-    await addDoc(collection(db, "users", user.uid, "contacts"), {
-      name,
-      phone,
-    });
+    // Create a new contact object with a unique timestamp ID
+    const newContact = {
+      id: Date.now().toString(), 
+      name: name.trim(),
+      phone: phone.trim(),
+    };
 
+    // Add it to our current list
+    const updatedContacts = [...contacts, newContact];
+    
+    // Instantly update the UI
+    setContacts(updatedContacts);
+    
+    // Save the new list directly to the phone's hard drive
+    await saveLocalContacts(updatedContacts);
+
+    // Clear the input boxes
     setName("");
     setPhone("");
-    fetchContacts();
   };
 
-  // Delete contact
+  // --- 3. DELETE CONTACT (Local Storage) ---
   const deleteContact = async (id) => {
-    await deleteDoc(doc(db, "users", user.uid, "contacts", id));
-    fetchContacts();
+    // Filter out the contact we want to delete
+    const updatedContacts = contacts.filter((contact) => contact.id !== id);
+    
+    // Instantly update the UI
+    setContacts(updatedContacts);
+    
+    // Save the new filtered list to the phone
+    await saveLocalContacts(updatedContacts);
   };
 
   return (
@@ -56,7 +62,7 @@ export default function MyCircle() {
       
       <Text style={styles.title}>Add Contacts</Text>
 
-      {/*Add Contact */}
+      {/* Add Contact */}
       <TextInput
         placeholder="Name"
         value={name}
@@ -76,7 +82,7 @@ export default function MyCircle() {
         <Text style={styles.btnText}>Add Contact</Text>
       </TouchableOpacity>
 
-      {/*Contact List */}
+      {/* Contact List */}
       <FlatList
         data={contacts}
         keyExtractor={(item) => item.id}
@@ -98,20 +104,19 @@ export default function MyCircle() {
   );
 }
 
+// Keep your existing styles exactly as they are!
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
     backgroundColor: "#ff8a5c",
   },
-
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
     color: "#fff",
   },
-
   input: {
     borderWidth: 1,
     borderColor: "#272424",
@@ -119,7 +124,6 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
   },
-
   addBtn: {
     backgroundColor: "#ffffff",
     padding: 14,
@@ -127,12 +131,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-
   btnText: {
     color: "#020202",
     fontWeight: "bold",
   },
-
   card: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -141,16 +143,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
-
   name: {
     fontSize: 16,
     fontWeight: "bold",
   },
-
   phone: {
     color: "#555",
   },
-
   delete: {
     color: "red",
     fontWeight: "bold",

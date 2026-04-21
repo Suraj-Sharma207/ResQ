@@ -1,38 +1,31 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useState } from "react";
 import { Alert, Linking, PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { auth, db } from "../../config/firebase";
-import useAuth from "../../hooks/useAuth";
 import useLocation from "../../hooks/useLocation";
 import useShake from "../../hooks/useShake";
+import { getLocalContacts } from "../../services/storageService";
+
 
 export default function Home() {
   const [isOn, setIsOn] = useState(false);
   const { address, coords } = useLocation();
   const router = useRouter();
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [contacts, setContacts] = useState([]);
 
-  // Fetch Contacts
+
   useFocusEffect(
     useCallback(() => {
       const fetchContacts = async () => {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
-
-        const snapshot = await getDocs(
-          collection(db, "users", currentUser.uid, "contacts")
-        );
-
-        const list = snapshot.docs.map((doc) => doc.data());
-        setContacts(list);
+        const localContacts = await getLocalContacts();
+        setContacts(localContacts);
       };
 
       fetchContacts();
     }, [])
   );
+
 
   const requestSMSPermission = async () => {
     if (Platform.OS !== 'android') return true;

@@ -1,251 +1,266 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { useCallback, useState } from "react";
-import { Alert, Image, Linking, PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View, } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { auth, db } from "../../config/firebase";
-import { signOut } from "firebase/auth";
-import useAuth from "../../hooks/useAuth";
-import useLocation from "../../hooks/useLocation";
-import useShake from "../../hooks/useShake";
+import { LinearGradient } from "expo-linear-gradient";
 
-export default function Home() {
-  const [isOn, setIsOn] = useState(false);
-  const { address, coords } = useLocation();
+import { getLocalContacts, getLocalProfile } from "../../services/storageService";
+
+export default function Profile() {
   const router = useRouter();
-  const { user } = useAuth();
   const [contacts, setContacts] = useState([]);
   const [userData, setUserData] = useState({});
 
-  // Fetch Contacts & User Data
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
+        const localProfile = await getLocalProfile();
+        if (localProfile) setUserData(localProfile);
 
-        // Fetch User Data
-        const userSnap = await getDoc(doc(db, "users", currentUser.uid));
-        if (userSnap.exists()) {
-          setUserData(userSnap.data());
-        }
-
-        // Fetch Contacts
-        const snapshot = await getDocs(
-          collection(db, "users", currentUser.uid, "contacts")
-        );
-
-        const list = snapshot.docs.map((doc) => doc.data());
-        setContacts(list);
+        const localContacts = await getLocalContacts();
+        setContacts(localContacts);
       };
 
       fetchData();
     }, [])
   );
 
-  const requestSMSPermission = async () => {
-    if (Platform.OS !== 'android') return true;
-
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.SEND_SMS,
-        {
-          title: "SMS Permission",
-          message: "This app needs permission to send automatic background SMS during emergencies.",
-          buttonPositive: "Allow",
-        }
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    } catch (err) {
-      console.warn(err);
-      return false;
-    }
-  };
-
-  const toggleSOS = async () => {
-    if (!isOn) {
-      if (!checkContacts()) return;
-      const granted = await requestSMSPermission();
-      if (!granted) {
-        Alert.alert("Permission Denied", "Automatic SOS requires SMS permissions. Please enable them in settings.");
-        return;
-      }
-    }
-    setIsOn(prev => !prev);
-  };
-
-  // FIXED: Passed 'isOn' as the second argument to prevent battery drain
-  useShake(() => {
-    if (!checkContacts()) return;
-
-    console.log("Collision detected! Routing to Alert Screen for 30-sec countdown.");
-
-    // FIXED: Removed sendSMS. The Alert screen will send it if the user doesn't cancel.
-    router.push("/alert");
-  }, isOn);
-
-  const openMap = () => {
-    if (!coords) return;
-    // FIXED: Correct Google Maps Universal Intent URL
-    const url = `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`;
-    Linking.openURL(url);
-  };
-
-  const checkContacts = () => {
-    if (!contacts || contacts.length === 0) {
-      Alert.alert(
-        "No Contacts Found",
-        "Please add at least one trusted contact before enabling SOS mode."
-      );
-      return false;
-    }
-    return true;
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.replace("/(auth)/login");
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
-
-      {/* Profile Header */}
-      <View style={styles.header}>
-        <Image
-          source={{
-            uri: userData.photo || "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-          }}
-          style={styles.avatar}
-        />
-        <Text style={styles.name}>{userData.name || "User Name"}</Text>
-      </View>
-
-      {/* Basic Info */}
-      <View style={styles.card}>
-        <Text style={styles.title}>Basic Info</Text>
-        <Text>{userData.email}</Text>
-        <Text>{userData.phone || "Add Number"}</Text>
-      </View>
-
-      {/*Emergency Info */}
-      <View style={styles.card}>
-        <Text style={styles.title}>Emergency Info</Text>
-        <Text>Blood Group: {userData.bloodGroup || ""}</Text>
-        <Text>Allergies: {userData.allergies || ""}</Text>
-        <Text>Note: {userData.note || ""}</Text>
-      </View>
-
-      {/* Contacts */}
-      <View style={styles.card}>
-        <Text style={styles.title}>Trusted Contacts</Text>
-        <TouchableOpacity
-          onPress={() => router.push("/myCircle")}
-          style={styles.smallBtn}
+    // 1. WRAPPED ENTIRE SCREEN IN A GRADIENT
+    <LinearGradient 
+      colors={["#ffbd7e", "#ff6b3d"]} 
+      style={styles.container}
+    >
+      {/* Set edges to ignore bottom safe area so the gradient goes behind tabs */}
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent} // Moved padding here
         >
-          <Text style={styles.btnText}>Manage Contacts</Text>
-        </TouchableOpacity>
-      </View>
+          
+          {/* --- PREMIUM AVATAR HEADER --- */}
+          <View style={styles.header}>
+            <View style={styles.avatarContainer}>
+              <Image
+                source={{ uri: userData.photo || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                style={styles.avatar}
+              />
+            </View>
+            <View style={{ alignItems: "center" }}>
+              <Text style={styles.name}>{userData.name || "ResQ User"}</Text>
+              <Text style={styles.tagline}>Safety Profile</Text>
+            </View>
+          </View>
 
-      {/*Logout*/}
-      <View style={styles.buttonRow}>
-        {/* Edit Profile */}
-        <TouchableOpacity
-          style={[styles.btn, { backgroundColor: "#0f56da" }]}
-          onPress={() => router.push("/editProfile")}>
-          <Text style={styles.btnText}>Edit Profile</Text>
-        </TouchableOpacity>
+          {/* --- BASIC INFO CARD --- */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="person-circle-outline" size={24} color="#ff8a5c" />
+              <Text style={styles.title}>Parents Details</Text>
+            </View>
+            
+            <View style={styles.row}>
+              <Text style={styles.label}>Phone</Text>
+              <Text style={styles.value}>{userData.phone || "Not set"}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.label}>Address</Text>
+              <Text style={styles.value}>{userData.address || "Not set"}</Text>
+            </View>
+          </View>
 
-        {/* Logout */}
-        <TouchableOpacity
-          style={[styles.btn, { backgroundColor: "#ff0000" }]}
-          onPress={handleLogout}>
-          <Text style={styles.btnText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
+          {/* --- MEDICAL INFO CARD --- */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="medical-outline" size={24} color="#ff0000" />
+              <Text style={styles.title}>Medical Info</Text>
+            </View>
 
-    </SafeAreaView>
+            <View style={styles.row}>
+              <Text style={styles.label}>Blood Group</Text>
+              <Text style={[styles.value, { color: "#ff0000", fontWeight: "900" }]}>
+                {userData.bloodGroup || "-"}
+              </Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.label}>Allergies</Text>
+              <Text style={styles.value}>{userData.allergies || "None"}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <Text style={styles.label}>Notes</Text>
+              <Text style={styles.value}>{userData.note || "No additional medical notes."}</Text>
+            </View>
+          </View>
+
+          {/* --- TRUSTED CONTACTS CARD --- */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="shield-checkmark-outline" size={24} color="#0f56da" />
+              <Text style={styles.title}>Emergency Network</Text>
+            </View>
+            
+            <View>
+              <Text style={styles.contactCount}>
+                You have {contacts.length} trusted contact(s) active.
+              </Text>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.manageBtn} 
+              onPress={() => router.push("/myCircle")}
+            >
+              <Ionicons name="people-outline" size={20} color="white" />
+              <Text style={styles.manageBtnText}>Manage Contacts</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* --- BOTTOM ACTION BUTTON --- */}
+          <TouchableOpacity
+            style={styles.editBtn}
+            onPress={() => router.push("/editProfile")}
+          >
+            <Ionicons name="pencil-outline" size={20} color="#ff8a5c" />
+            <Text style={styles.editBtnText}>Edit Profile</Text>
+          </TouchableOpacity>
+
+           
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#ff8a5c",
   },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  scrollContent: {
+    padding: 20, // Moved padding here so scrollbar touches edge
   },
   header: {
     alignItems: "center",
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  avatarContainer: {
+    padding: 4,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 60,
+    marginBottom: 15,
   },
   avatar: {
-    width: 90,
-    height: 90,
+    width: 100,
+    height: 100,
     borderRadius: 50,
-    marginBottom: 10,
+    backgroundColor: "#ddd",
   },
   name: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 26,
+    fontWeight: "900",
     color: "white",
+    letterSpacing: 0.5,
+  },
+  tagline: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.9)",
+    marginTop: 4,
+    textTransform: "uppercase",
+    fontWeight: "bold",
   },
   card: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    
+    // 3. FIXED ELEVATION: Softer, more modern shadows
+    elevation: 3, 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 15,
-    elevation: 4,
   },
   title: {
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 8,
+    color: "#333",
+    marginLeft: 10,
   },
-  smallBtn: {
-    marginTop: 10,
-    backgroundColor: "#0f56da",
-    padding: 10,
-    borderRadius: 8,
-    alignItems: "center",
-    elevation: 3,
-  },
-  btnText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-
-  logoutText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-
-  buttonRow: {
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
-
-  },
-
-  btn: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 10,
     alignItems: "center",
-    marginHorizontal: 5,
-    elevation: 2,
-
+    paddingVertical: 8,
   },
-
-  btnText: {
+  label: {
+    fontSize: 15,
+    color: "#777",
+    fontWeight: "600",
+  },
+  value: {
+    fontSize: 15,
+    color: "#222",
+    fontWeight: "bold",
+    flexShrink: 1,
+    textAlign: "right",
+    paddingLeft: 20,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#f4f4f4", // Lighter divider color
+    marginVertical: 4,
+  },
+  contactCount: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 15,
+  },
+  manageBtn: {
+    backgroundColor: "#0f56da",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  manageBtnText: {
     color: "white",
     fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  editBtn: {
+    backgroundColor: "white",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderRadius: 15,
+    marginTop: 5,
+    marginBottom: 20,
+    
+    // Matched the button shadow to the card shadow
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  editBtnText: {
+    color: "#ff8a5c",
+    fontWeight: "900",
+    fontSize: 16,
+    marginLeft: 8,
+    textTransform: "uppercase",
   },
 });

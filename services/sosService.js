@@ -1,5 +1,3 @@
- 
-import { getContacts } from "./contactService";
 import { sendSMS } from "./smsService";
 
 export const sendSOS = async (coords, user) => {
