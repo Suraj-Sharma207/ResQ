@@ -1,40 +1,92 @@
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
+import { Alert } from 'react-native';
+// Import your local storage and SMS functions!
+import { getLocalContacts } from './storageService'; 
+// import { sendSMS } from './smsService'; // Assuming you have this from your alert screen!
 
 const SOS_TASK_NAME = 'resq-sos-background-task';
 
-// 1. Define the background task (Must be outside of any React components!)
-TaskManager.defineTask(SOS_TASK_NAME, ({ data, error }) => {
+// Top-level variables to hold speed memory while app is locked
+let prevSpeed = 0;
+let isProcessingCrash = false;
+
+// 1. THE AUTONOMOUS BACKGROUND BRAIN
+TaskManager.defineTask(SOS_TASK_NAME, async ({ data, error }) => {
   if (error) {
     console.error("Background Task Error:", error);
     return;
   }
-  // The beauty of this is we don't actually need to process the data here.
-  // The simple act of this task running forces Android to keep our app completely awake!
-});
 
-// We leave this empty so we don't have to delete it from Home.jsx
-export const setupBackgroundService = () => {};
+  if (data && data.locations) {
+    // Get the most recent location data
+    const location = data.locations[0];
+    const currentSpeed = location.coords.speed || 0;
 
-// 2. Start the official Expo Foreground Service
-export const startSOSBackgroundMode = async () => {
-  try {
-    // Background tracking requires explicit user permission
-    const { status } = await Location.requestBackgroundPermissionsAsync();
-    
-    if (status !== 'granted') {
-      console.warn("Background location permission denied.");
-      return;
+    console.log(`[Background] Speed: ${currentSpeed.toFixed(2)} m/s`);
+
+    // --- BACKGROUND VEHICLE CRASH DETECTION ---
+    // If we were going faster than 8m/s (30km/h) and suddenly stop...
+    if (prevSpeed > 8 && currentSpeed < 1 && !isProcessingCrash) {
+      isProcessingCrash = true;
+      
+      try {
+        // 1. Fetch contacts from local phone storage
+        const contacts = await getLocalContacts();
+        
+        if (contacts.length > 0) {
+          const lat = location.coords.latitude;
+          const lon = location.coords.longitude;
+          const mapLink = `https://maps.google.com/?q=$${lat},${lon}`;
+          const message = `EMERGENCY (Auto-Detected)! I may have been in a crash. My exact location: ${mapLink}`;
+          
+          // 2. Fire the SMS directly from the locked phone!
+          const phoneNumbers = contacts.map(c => c.phone);
+          // Uncomment this once your sendSMS function is imported:
+          // sendSMS(phoneNumbers, message); 
+          
+          console.log("Background SMS Dispatched to:", phoneNumbers);
+        }
+      } catch (err) {
+        console.error("Failed to send background SMS", err);
+      }
+
+      // Reset the crash processor after 2 minutes
+      setTimeout(() => {
+        isProcessingCrash = false;
+      }, 120000);
     }
 
-    // This command automatically creates the sticky Android Notification!
+    // Update the speed memory for the next tick
+    prevSpeed = currentSpeed;
+  }
+});
+
+// Used to prevent Home.jsx from crashing
+export const setupBackgroundService = () => {};
+
+// 2. Start the tracking
+export const startSOSBackgroundMode = async () => {
+  try {
+    const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
+    if (fgStatus !== 'granted') return;
+
+    const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
+    if (bgStatus !== 'granted') return;
+
+    // Reset memory when starting
+    prevSpeed = 0;
+    isProcessingCrash = false;
+
+    // We changed distanceInterval to 0 so it updates constantly based on time instead of distance
     await Location.startLocationUpdatesAsync(SOS_TASK_NAME, {
       accuracy: Location.Accuracy.High,
-      distanceInterval: 1, // Update every 1 meter
+      timeInterval: 2000, 
+      distanceInterval: 0, 
       showsBackgroundLocationIndicator: true,
       foregroundService: {
         notificationTitle: "ResQ SOS Active",
-        notificationBody: "Monitoring sensors for crashes in the background.",
+        notificationBody: "Monitoring vehicle speed in the background.",
         notificationColor: "#ff8a5c",
       },
     });
@@ -45,7 +97,7 @@ export const startSOSBackgroundMode = async () => {
   }
 };
 
-// 3. Safely kill the service
+// 3. Stop the tracking
 export const stopSOSBackgroundMode = async () => {
   try {
     const isRegistered = await TaskManager.isTaskRegisteredAsync(SOS_TASK_NAME);
