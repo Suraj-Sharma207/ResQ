@@ -6,6 +6,12 @@ export default function useShake(onCrash, active) {
   const isProcessing = useRef(false);
   const currentSpeed = useRef(0);
   const prevSpeed = useRef(0);
+  
+  
+  const savedOnCrash = useRef(onCrash);
+  useEffect(() => {
+    savedOnCrash.current = onCrash;
+  }, [onCrash]);
 
   useEffect(() => {
     if (!active) {
@@ -13,19 +19,18 @@ export default function useShake(onCrash, active) {
       return;
     }
 
-    let locationSubscription;
     let accelSubscription;
+    let locationSubscriptionPromise; 
 
-    async function startSensors() {
+    function startSensors() {
       // --- 1. START GPS TRACKING ---
-      locationSubscription = await Location.watchPositionAsync(
+      locationSubscriptionPromise = Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
           timeInterval: 1000,
           distanceInterval: 1,
         },
         (location) => {
-          // Update our live speed ref (m/s)
           const speed = location.coords.speed || 0;
           currentSpeed.current = speed;
 
@@ -40,14 +45,13 @@ export default function useShake(onCrash, active) {
         }
       );
 
-      // ---  START ACCELEROMETER ---
-      Accelerometer.setUpdateInterval(200);
+      // --- 2. START ACCELEROMETER ---
+      Accelerometer.setUpdateInterval(100); // 100ms catches fast impacts better than 200ms
       accelSubscription = Accelerometer.addListener(({ x, y, z }) => {
         const totalForce = Math.sqrt(x ** 2 + y ** 2 + z ** 2);
-        const pureImpact = Math.abs(totalForce - 1); // Subtract gravity
+        const pureImpact = Math.abs(totalForce - 1);
 
         // PEDESTRIAN FALL DETECTOR
-        // They must experience high impact AND be moving at a walking/jogging speed
         if (
           pureImpact > 3.0 &&               // Hard impact
           currentSpeed.current > 0.7 &&     // Faster than standing still
@@ -60,10 +64,9 @@ export default function useShake(onCrash, active) {
       });
     }
 
-    // --- HELPER TO TRIGGER ALERT ONCE ---
     const triggerCrash = () => {
       isProcessing.current = true;
-      onCrash();
+      if (savedOnCrash.current) savedOnCrash.current();
 
       // Cooldown timer to prevent spamming
       setTimeout(() => {
@@ -73,10 +76,15 @@ export default function useShake(onCrash, active) {
 
     startSensors();
 
-    // CLEANUP: Stop both sensors when the user turns SOS off or leaves the app
+    // CLEANUP: 
     return () => {
-      if (locationSubscription) locationSubscription.remove();
+      if (locationSubscriptionPromise) {
+        locationSubscriptionPromise.then((subscription) => {
+          if (subscription) subscription.remove();
+        });
+      }
+      
       if (accelSubscription) accelSubscription.remove();
     };
-  }, [active, onCrash]);
+  }, [active]); 
 }

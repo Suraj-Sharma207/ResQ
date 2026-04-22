@@ -1,19 +1,34 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, Linking, PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { 
+  Alert, 
+  Linking, 
+  PermissionsAndroid, 
+  Platform, 
+  StyleSheet, 
+  Text, 
+  TouchableOpacity, 
+  View } from "react-native";
 import useLocation from "../../hooks/useLocation";
 import useShake from "../../hooks/useShake";
 import { getLocalContacts } from "../../services/storageService";
+import { 
+  setupBackgroundService, 
+  startSOSBackgroundMode, 
+  stopSOSBackgroundMode 
+} from "../../services/backgroundService";
 
 
 export default function Home() {
   const [isOn, setIsOn] = useState(false);
-  const { address, coords } = useLocation();
+  const { address, coords } = useLocation(isOn);
   const router = useRouter();
-  // const { user } = useAuth();
   const [contacts, setContacts] = useState([]);
 
+  useEffect(() => {
+    setupBackgroundService();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -54,24 +69,26 @@ export default function Home() {
         Alert.alert("Permission Denied", "Automatic SOS requires SMS permissions. Please enable them in settings.");
         return;
       }
+      startSOSBackgroundMode();
+    }else{
+      stopSOSBackgroundMode();
     }
     setIsOn(prev => !prev);
   };
 
-  // FIXED: Passed 'isOn' as the second argument to prevent battery drain
+  // Passed 'isOn' as the second argument to prevent battery drain
   useShake(() => {
     if (!checkContacts()) return;
 
     console.log("Collision detected! Routing to Alert Screen for 30-sec countdown.");
 
-    // FIXED: Removed sendSMS. The Alert screen will send it if the user doesn't cancel.
     router.push("/alert");
   }, isOn);
 
   const openMap = () => {
     if (!coords) return;
-    // FIXED: Correct Google Maps Universal Intent URL
-    const url = `https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}`;
+    // Google Maps Universal Intent URL
+    const url = `https://maps.google.com/?q=${coords.latitude},${coords.longitude}`;
     Linking.openURL(url);
   };
 
