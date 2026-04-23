@@ -3,6 +3,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
+// 🚨 NEW IMPORT ADDED HERE
+import BackgroundTimer from "react-native-background-timer";
+
 import useLocation from "../hooks/useLocation";
 import { sendSOS } from "../services/sosService";
 import { getLocalContacts } from "../services/storageService";
@@ -18,7 +21,6 @@ export default function Alert() {
   const { coords } = useLocation();
   const [sent, setSent] = useState(false);
   
-
   // State to hold emergency contacts
   const [contacts, setContacts] = useState([]);
   const coordsRef = useRef(coords);
@@ -27,7 +29,7 @@ export default function Alert() {
     coordsRef.current = coords;
   }, [coords]);
 
-// 2. FETCH CONTACTS LOCALLY WHILE TIMER TICKS
+  // 2. FETCH CONTACTS LOCALLY WHILE TIMER TICKS
   useEffect(() => {
     const fetchContacts = async () => {
       const localContacts = await getLocalContacts();
@@ -40,10 +42,12 @@ export default function Alert() {
   useEffect(() => {
     if (sent) return;
 
-    const timer = setInterval(() => {
+    // 🚨 REPLACED setInterval WITH NATIVE BACKGROUND TIMER
+    BackgroundTimer.runBackgroundTimer(() => {
       setTime((prevTime) => {
         if (prevTime <= 1) {
-          clearInterval(timer);
+          // Kill the native timer
+          BackgroundTimer.stopBackgroundTimer();
           setSent(true);
 
           // 4. SEND BACKGROUND SMS TO ALL CONTACTS
@@ -51,7 +55,7 @@ export default function Alert() {
             const phoneNumbers = contacts.map(c => c.phone);
             const lat = coordsRef.current?.latitude;
             const lon = coordsRef.current?.longitude;
-            const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+            const mapLink = `http://maps.google.com/?q=${lat},${lon}`;
 
             const message = `EMERGENCY! I need help. My location: ${mapLink}`;
 
@@ -60,7 +64,6 @@ export default function Alert() {
           }
 
           // 5. NAVIGATION FIX
-          // Removed handleStopAlert() from here so it doesn't conflict with replace()
           setTimeout(() => {
             safeStopAlert();
             router.replace("/profile");
@@ -72,8 +75,9 @@ export default function Alert() {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [sent, contacts]); // Added 'contacts' to dependency array
+    // CLEANUP: Kill the native timer if the component unmounts early
+    return () => BackgroundTimer.stopBackgroundTimer();
+  }, [sent, contacts]); 
 
   // --- SIREN & VIBRATION LOGIC ---
   useEffect(() => {
@@ -97,30 +101,21 @@ export default function Alert() {
 
   // --- MANUAL STOP BUTTON ---
   const handleStopAlert = () => {
-    safeStopAlert(); // Use the safe stop logic here too
+    BackgroundTimer.stopBackgroundTimer();
+    safeStopAlert(); 
     router.back();
   };
 
   return (
     <View style={styles.container}>
-
-      {/*  Alert Card */}
+      {/* Alert Card */}
       <LinearGradient colors={["#fd8e63", "#ff5f5f"]} style={styles.card}>
         <Text style={styles.title}>Are you safe?</Text>
+        <Text style={styles.subtitle}>We detected unusual movement</Text>
+        <Text style={styles.subtitle}>If you don’t respond,</Text>
+        <Text style={styles.subtitle}>Help will be alerted automatically within</Text>
 
-        <Text style={styles.subtitle}>
-          We detected unusual movement
-        </Text>
-
-        <Text style={styles.subtitle}>
-          If you don’t respond,
-        </Text>
-
-        <Text style={styles.subtitle}>
-          Help will be alerted automatically within
-        </Text>
-
-        {/*  Timer */}
+        {/* Timer */}
         <Text style={styles.timer}>{time}</Text>
       </LinearGradient>
 
@@ -138,9 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#eaeaea",
     alignItems: "center",
     justifyContent: "flex-start",
-
   },
-
   card: {
     width: "100%",
     height: "55%",
@@ -149,7 +142,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 25,
   },
-
   title: {
     fontSize: 44,
     fontWeight: "bold",
@@ -157,19 +149,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 60,
   },
-
   subtitle: {
     color: "#fff",
     fontSize: 18,
   },
-
   timer: {
     fontSize: 200,
     fontWeight: "bold",
     color: "#ffd6a5",
     textAlign: "center",
   },
-
   button: {
     marginTop: 40,
     backgroundColor: "#ff7a45",
@@ -177,7 +166,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 50,
     borderRadius: 12,
   },
-
   buttonText: {
     color: "#fff",
     fontSize: 18,

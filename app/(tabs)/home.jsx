@@ -18,6 +18,7 @@ import {
   startSOSBackgroundMode, 
   stopSOSBackgroundMode 
 } from "../../services/backgroundService";
+import useNativeShake from "../../hooks/useNativeShake";
 
 
 export default function Home() {
@@ -77,7 +78,7 @@ export default function Home() {
   };
 
   // Passed 'isOn' as the second argument to prevent battery drain
-  useShake(() => {
+  useNativeShake(() => {
     if (!checkContacts()) return;
 
     console.log("Collision detected! Routing to Alert Screen for 30-sec countdown.");
