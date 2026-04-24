@@ -1,4 +1,4 @@
-package com.anonymous.ResQ
+package com.anonymous.ResQ 
 
 import android.view.View
 import com.facebook.react.ReactPackage
@@ -8,11 +8,6 @@ import com.facebook.react.uimanager.ReactShadowNode
 import com.facebook.react.uimanager.ViewManager
 
 class SensorPackage : ReactPackage {
-    override fun createViewManagers(
-        reactContext: ReactApplicationContext
-    ): MutableList<ViewManager<View, ReactShadowNode<*>>> = mutableListOf()
-
-    override fun createNativeModules(
-        reactContext: ReactApplicationContext
-    ): MutableList<NativeModule> = listOf(SensorModule(reactContext)).toMutableList()
+    override fun createViewManagers(reactContext: ReactApplicationContext): MutableList<ViewManager<View, ReactShadowNode<*>>> = mutableListOf()
+    override fun createNativeModules(reactContext: ReactApplicationContext): MutableList<NativeModule> = listOf(SensorModule(reactContext)).toMutableList()
 }

@@ -37,5 +37,10 @@
         <data android:scheme="exp+resq"/>
       </intent-filter>
     </activity>
+    <service
+    android:name=".CrashSensorService"
+    android:enabled="true"
+    android:exported="false"
+    android:foregroundServiceType="specialUse" />
   </application>
 </manifest>
