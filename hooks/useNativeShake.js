@@ -1,21 +1,26 @@
 import { useEffect } from 'react';
 import { NativeModules, NativeEventEmitter } from 'react-native';
 
-// Target the Kotlin module we named "CrashSensor"
 const { CrashSensor } = NativeModules;
-const crashEventEmitter = new NativeEventEmitter(CrashSensor);
+
+// SAFETY CHECK: Only create the emitter if the module actually exists
+const crashEventEmitter = CrashSensor ? new NativeEventEmitter(CrashSensor) : null;
 
 export default function useNativeShake(onCrash, active) {
   useEffect(() => {
+    // SAFETY CHECK: Stop the hook from crashing if Kotlin isn't linked yet
+    if (!CrashSensor) {
+      console.warn("NATIVE MODULE MISSING: CrashSensor is null. Are you in Expo Go?");
+      return;
+    }
+
     if (!active) {
       CrashSensor.stopService();
       return;
     }
 
-    // Command Android to start the native service
     CrashSensor.startService();
 
-    // Listen for the native BroadcastReceiver to yell "OnCrashDetected"
     const subscription = crashEventEmitter.addListener(
       'OnCrashDetected',
       () => {
@@ -24,9 +29,8 @@ export default function useNativeShake(onCrash, active) {
       }
     );
 
-    // CLEANUP: Stop the service and remove the listener when toggled off
     return () => {
-      subscription.remove();
+      if (subscription) subscription.remove();
       CrashSensor.stopService();
     };
   }, [active]);
