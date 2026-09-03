@@ -101,6 +101,33 @@ class CrashSensorService : Service(), SensorEventListener {
                     isProcessingCrash = true
                     lastCrashTimestamp = now
                     spikeCount = 0
+
+                    // 1. Wake up the physical screen hardware immediately
+                    try {
+                        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                        @Suppress("DEPRECATION")
+                        val screenWakeLock = pm.newWakeLock(
+                            PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP or PowerManager.ON_AFTER_RELEASE,
+                            "ResQ::CrashScreenWakeLock"
+                        )
+                        screenWakeLock.acquire(15000L) // Screen stays on for 15 seconds
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    // 2. Bring MainActivity to the front on top of the lock screen
+                    try {
+                        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        }
+                        if (launchIntent != null) {
+                            startActivity(launchIntent)
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    // 3. Broadcast to React Native JS engine to route to /alert screen
                     LocalBroadcastManager.getInstance(this)
                         .sendBroadcast(Intent("CRASH_DETECTED_EVENT"))
                     // Release the processing lock after cooldown

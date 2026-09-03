@@ -10,6 +10,7 @@ import {
   Text, 
   TouchableOpacity, 
   View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import useLocation from "../../hooks/useLocation";
 import useShake from "../../hooks/useShake";
 import { getLocalContacts } from "../../services/storageService";
@@ -19,6 +20,7 @@ import {
   stopSOSBackgroundMode 
 } from "../../services/backgroundService";
 import useNativeShake from "../../hooks/useNativeShake";
+import UserGuideModal from "../../components/UserGuideModal";
 
 
 export default function Home() {
@@ -26,9 +28,22 @@ export default function Home() {
   const { address, coords } = useLocation(isOn);
   const router = useRouter();
   const [contacts, setContacts] = useState([]);
+  const [guideVisible, setGuideVisible] = useState(false);
 
   useEffect(() => {
     setupBackgroundService();
+
+    const checkFirstLaunch = async () => {
+      try {
+        const seen = await AsyncStorage.getItem("@resq_user_guide_seen");
+        if (!seen) {
+          setGuideVisible(true);
+        }
+      } catch (e) {
+        console.error("Error reading guide state", e);
+      }
+    };
+    checkFirstLaunch();
   }, []);
 
   useFocusEffect(
@@ -107,6 +122,22 @@ export default function Home() {
   return (
     <View style={[styles.container, { backgroundColor: isOn ? "#39d12f" : "#ff8a5c" }]}>
 
+      {/* Top Header Bar with User Guide */}
+      <View style={styles.headerBar}>
+        <View style={styles.headerTitleGroup}>
+          <Text style={styles.appTitle}>ResQ</Text>
+          <View style={[styles.statusDot, { backgroundColor: isOn ? "#fff" : "#ffebee" }]} />
+        </View>
+        <TouchableOpacity
+          style={styles.guideButton}
+          onPress={() => setGuideVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="help-circle-outline" size={19} color="#fff" />
+          <Text style={styles.guideButtonText}>How it Works</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Location */}
       <TouchableOpacity style={styles.topSection} onPress={openMap}>
         <View style={styles.locationCard}>
@@ -148,6 +179,12 @@ export default function Home() {
         <Text style={styles.testText}>Test Alert</Text>
       </TouchableOpacity>
 
+      {/* User Manual & Safety Guide Pop-up */}
+      <UserGuideModal
+        visible={guideVisible}
+        onClose={() => setGuideVisible(false)}
+      />
+
     </View>
   );
 }
@@ -158,8 +195,53 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // space for tab bar
   },
 
+  headerBar: {
+    marginTop: 52,
+    marginHorizontal: 22,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  headerTitleGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  appTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    letterSpacing: 0.5,
+  },
+
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+
+  guideButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.18)",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+  },
+
+  guideButtonText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    marginLeft: 5,
+  },
+
   topSection: {
-    marginTop: 60,
+    marginTop: 18,
     alignItems: "center",
     marginHorizontal: 15,
   },
