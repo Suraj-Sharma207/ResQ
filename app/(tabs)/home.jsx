@@ -28,22 +28,22 @@ export default function Home() {
   const { address, coords } = useLocation(isOn);
   const router = useRouter();
   const [contacts, setContacts] = useState([]);
-  const [guideVisible, setGuideVisible] = useState(false);
+  const [guideVisible, setGuideVisible] = useState(true);
 
   useEffect(() => {
     setupBackgroundService();
 
-    const checkFirstLaunch = async () => {
+    const checkGuidePref = async () => {
       try {
         const seen = await AsyncStorage.getItem("@resq_user_guide_seen");
-        if (!seen) {
-          setGuideVisible(true);
+        if (seen === "true") {
+          setGuideVisible(false);
         }
       } catch (e) {
         console.error("Error reading guide state", e);
       }
     };
-    checkFirstLaunch();
+    checkGuidePref();
   }, []);
 
   useFocusEffect(

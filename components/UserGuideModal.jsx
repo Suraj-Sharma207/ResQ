@@ -30,24 +30,24 @@ export default function UserGuideModal({ visible, onClose }) {
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.modalCard}>
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={styles.headerTitleRow}>
-                <View style={styles.iconCircle}>
-                  <Ionicons name="shield-checkmark" size={24} color="#fff" />
-                </View>
-                <View style={styles.headerTextContainer}>
-                  <Text style={styles.headerTitle}>User Manual & Safety Guide</Text>
-                  <Text style={styles.headerSubtitle}>How ResQ protects you on the road</Text>
-                </View>
+        <View style={styles.modalCard}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerTitleRow}>
+              <View style={styles.iconCircle}>
+                <Ionicons name="shield-checkmark" size={24} color="#fff" />
               </View>
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.headerTitle}>User Manual & Safety Guide</Text>
+                <Text style={styles.headerSubtitle}>How ResQ protects you on the road</Text>
+              </View>
+            </View>
               {/* Close Button (X) */}
               <TouchableOpacity
                 style={styles.closeIconButton}
@@ -176,7 +176,6 @@ export default function UserGuideModal({ visible, onClose }) {
               </TouchableOpacity>
             </View>
           </View>
-        </SafeAreaView>
       </View>
     </Modal>
   );
@@ -188,14 +187,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  safeArea: {
-    width: '92%',
-    maxHeight: '88%',
-    alignItems: 'center',
+    paddingHorizontal: 16,
   },
   modalCard: {
-    width: '100%',
+    width: '94%',
+    maxHeight: '82%',
     backgroundColor: '#ffffff',
     borderRadius: 24,
     overflow: 'hidden',
