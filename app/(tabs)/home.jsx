@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { 
   Alert, 
+  Animated,
   Linking, 
   PermissionsAndroid, 
   Platform, 
@@ -29,6 +30,22 @@ export default function Home() {
   const router = useRouter();
   const [contacts, setContacts] = useState([]);
   const [guideVisible, setGuideVisible] = useState(true);
+
+  // 1 = expanded ("How it works ?"), 0 = collapsed ("?")
+  const guideCollapseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Keep expanded for 3 seconds, then smoothly animate text into the ? button
+    const collapseTimer = setTimeout(() => {
+      Animated.timing(guideCollapseAnim, {
+        toValue: 0,
+        duration: 550,
+        useNativeDriver: false,
+      }).start();
+    }, 3000);
+
+    return () => clearTimeout(collapseTimer);
+  }, []);
 
   useEffect(() => {
     setupBackgroundService();
@@ -119,29 +136,27 @@ export default function Home() {
     return true;
   };
 
+  const animatedTextWidth = guideCollapseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 96],
+  });
+
+  const animatedTextOpacity = guideCollapseAnim.interpolate({
+    inputRange: [0, 0.3, 1],
+    outputRange: [0, 0, 1],
+  });
+
+  const animatedPaddingRight = guideCollapseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [6, 12],
+  });
+
   return (
     <View style={[styles.container, { backgroundColor: isOn ? "#39d12f" : "#ff8a5c" }]}>
 
-      {/* Top Header Bar with User Guide */}
-      <View style={styles.headerBar}>
-        <View style={styles.headerTitleGroup}>
-          <Text style={styles.appTitle}>ResQ</Text>
-          <View style={[styles.statusDot, { backgroundColor: isOn ? "#fff" : "#ffebee" }]} />
-        </View>
-        <TouchableOpacity
-          style={styles.guideButton}
-          onPress={() => setGuideVisible(true)}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="help-circle-outline" size={19} color="#fff" />
-          <Text style={styles.guideButtonText}>How it Works</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Location */}
-      <TouchableOpacity style={styles.topSection} onPress={openMap}>
-        <View style={styles.locationCard}>
-
+      {/* Location & Guide Header */}
+      <View style={styles.topSection}>
+        <TouchableOpacity style={styles.locationCard} onPress={openMap} activeOpacity={0.85}>
           <View style={styles.row}>
             <Ionicons name="flash" size={18} color="#ff6b4a" />
 
@@ -159,8 +174,32 @@ export default function Home() {
           </View>
 
           <Ionicons name="navigate" size={18} color="#333" />
+        </TouchableOpacity>
+
+        {/* Guide Button aligned perfectly to the right edge of locationCard */}
+        <View style={styles.guideButtonContainer}>
+          <TouchableOpacity
+            onPress={() => setGuideVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Animated.View style={[styles.guideButton, { paddingRight: animatedPaddingRight }]}>
+              <Ionicons name="help-circle" size={20} color="#fff" />
+              <Animated.View
+                style={{
+                  width: animatedTextWidth,
+                  opacity: animatedTextOpacity,
+                  overflow: "hidden",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={styles.guideButtonText} numberOfLines={1}>
+                  How it works ?
+                </Text>
+              </Animated.View>
+            </Animated.View>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
 
       {/* SOS */}
       <View style={styles.centerSection}>
@@ -195,55 +234,10 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // space for tab bar
   },
 
-  headerBar: {
-    marginTop: 52,
-    marginHorizontal: 22,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  headerTitleGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  appTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
-    letterSpacing: 0.5,
-  },
-
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-
-  guideButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.18)",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.35)",
-  },
-
-  guideButtonText: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "600",
-    marginLeft: 5,
-  },
-
   topSection: {
-    marginTop: 18,
+    marginTop: 60,
     alignItems: "center",
-    marginHorizontal: 15,
+    width: "100%",
   },
 
   locationCard: {
@@ -256,13 +250,44 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  guideButtonContainer: {
+    width: "90%",
+    alignItems: "flex-end",
+    marginTop: 8,
+  },
+
+  guideButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.18)",
+    paddingLeft: 6,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+  },
+
+  guideButtonText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    marginLeft: 5,
+    width: 95,
+  },
+
   row: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
   },
 
   locationTitle: { fontSize: 12, color: "#777" },
-  locationText: { fontSize: 16, fontWeight: "bold" },
+  locationText: { fontSize: 13, color: "#333", flexShrink: 1 },
+
+  textContainer: {
+    marginLeft: 8,
+    flex: 1,
+  },
 
   centerSection: {
     flex: 1,
@@ -307,31 +332,5 @@ const styles = StyleSheet.create({
   testText: {
     color: "#fff",
     fontWeight: "bold",
-  },
-
-  textContainer: {
-    marginLeft: 8,
-    flex: 1,
-  },
-
-  locationCard: {
-    backgroundColor: "#eee",
-    padding: 12,
-    borderRadius: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-
-  locationText: {
-    fontSize: 13,
-    color: "#333",
-    flexShrink: 1,
   },
 });

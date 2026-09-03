@@ -139,13 +139,13 @@ export default function UserGuideModal({ visible, onClose }) {
                 </View>
               </View>
 
-              {/* Samsung Tip */}
+              {/* Universal Lock Screen Display Tip */}
               <View style={styles.tipBox}>
                 <Ionicons name="phone-portrait-outline" size={20} color="#ff6b4a" />
                 <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.tipTitle}>Samsung / Lock Screen Tip</Text>
+                  <Text style={styles.tipTitle}>Lock Screen Display Tip</Text>
                   <Text style={styles.tipText}>
-                    To let the countdown timer pop up over your locked screen, enable <Text style={styles.bold}>"Appear on top"</Text> in your phone Settings &gt; Apps &gt; ResQ.
+                    To let the countdown timer pop up over your locked screen, ensure <Text style={styles.bold}>"Appear on top"</Text> (or "Display over other apps") is enabled in your phone Settings &gt; Apps &gt; ResQ.
                   </Text>
                 </View>
               </View>
