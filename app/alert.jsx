@@ -3,7 +3,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-native";
-// 🚨 NEW IMPORT ADDED HERE
 import BackgroundTimer from "react-native-background-timer";
 
 import useLocation from "../hooks/useLocation";
@@ -42,7 +41,7 @@ export default function Alert() {
   useEffect(() => {
     if (sent) return;
 
-    // 🚨 REPLACED setInterval WITH NATIVE BACKGROUND TIMER
+    // REPLACED setInterval WITH NATIVE BACKGROUND TIMER
     BackgroundTimer.runBackgroundTimer(() => {
       setTime((prevTime) => {
         if (prevTime <= 1) {

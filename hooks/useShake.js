@@ -30,11 +30,15 @@ export default function useShake(onCrash, active) {
           timeInterval: 1000,
           distanceInterval: 1,
         },
-        (location) => {
-          const speed = location.coords.speed || 0;
+        async (location) => {
+          // GPS speed can return -1 (unknown/unavailable).
+          // Treat -1 as the previous valid speed rather than 0 so the
+          // crash threshold (prevSpeed > 8) doesn't get permanently blocked.
+          const rawSpeed = location.coords.speed;
+          const speed = rawSpeed >= 0 ? rawSpeed : prevSpeed.current;
           currentSpeed.current = speed;
 
-          // VEHICLE CRASH DETECTOR (High speed drops to zero)
+          // VEHICLE CRASH DETECTOR (High speed drops to near-zero)
           // 8 m/s is roughly 30 km/h
           if (prevSpeed.current > 8 && speed < 1 && !isProcessing.current) {
             console.log("VEHICLE CRASH DETECTED via GPS Deceleration!");

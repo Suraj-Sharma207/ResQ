@@ -38,9 +38,9 @@ yarn-error.*
 
 app-example
 
-# generated native folders
-/ios
-/android
+# generated native folders — REMOVED: EAS bare workflow needs these committed
+# /ios
+# /android
 
 # Expo
 

@@ -1,9 +1,7 @@
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
-import { Alert } from 'react-native';
-// Import your local storage and SMS functions!
-import { getLocalContacts } from './storageService'; 
-// import { sendSMS } from './smsService'; // Assuming you have this from your alert screen!
+import { getLocalContacts } from './storageService';
+import { sendSMS } from './smsService';
 
 const SOS_TASK_NAME = 'resq-sos-background-task';
 
@@ -37,13 +35,12 @@ TaskManager.defineTask(SOS_TASK_NAME, async ({ data, error }) => {
         if (contacts.length > 0) {
           const lat = location.coords.latitude;
           const lon = location.coords.longitude;
-          const mapLink = `https://maps.google.com/?q=$${lat},${lon}`;
+          const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
           const message = `EMERGENCY (Auto-Detected)! I may have been in a crash. My exact location: ${mapLink}`;
           
-          // 2. Fire the SMS directly from the locked phone!
+          // Fire the SMS directly from the locked phone!
           const phoneNumbers = contacts.map(c => c.phone);
-          // Uncomment this once your sendSMS function is imported:
-          // sendSMS(phoneNumbers, message); 
+          sendSMS(phoneNumbers, message);
           
           console.log("Background SMS Dispatched to:", phoneNumbers);
         }

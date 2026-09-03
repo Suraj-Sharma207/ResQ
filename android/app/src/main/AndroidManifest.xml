@@ -41,6 +41,6 @@
     android:name=".CrashSensorService"
     android:enabled="true"
     android:exported="false"
-    android:foregroundServiceType="specialUse" />
+    android:foregroundServiceType="location" />
   </application>
 </manifest>

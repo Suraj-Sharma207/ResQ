@@ -6,7 +6,6 @@ export default function useLocation(active) {
   const [coords, setCoords] = useState(null);
 
   useEffect(() => {
-    // 1. BATTERY SAVER: Do not turn on the GPS chip unless SOS is active
     if (!active) {
       setAddress("SOS is Off");
       return;

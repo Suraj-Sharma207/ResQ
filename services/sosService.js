@@ -1,4 +1,5 @@
 import { sendSMS } from "./smsService";
+import { getLocalContacts } from "./storageService";
 
 export const sendSOS = async (coords, user) => {
   if (!coords || !user) {
@@ -12,7 +13,7 @@ export const sendSOS = async (coords, user) => {
 This is my Current Location https://maps.google.com/?q=${latitude},${longitude}`;
 
   try {
-    const contacts = await getContacts(user.uid);
+    const contacts = await getLocalContacts();
     console.log("Contacts:", contacts);
     sendSMS(contacts, message);
     console.log("SOS Sent via SIM");
