@@ -1,14 +1,36 @@
 # Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /usr/local/Cellar/android-sdk/24.3.3/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# react-native-reanimated
+# ---- React Native core ----
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.hermes.** { *; }
+-keep class com.facebook.jni.** { *; }
+-dontwarn com.facebook.**
+
+# ---- React Native Reanimated ----
 -keep class com.swmansion.reanimated.** { *; }
+-keep class com.swmansion.gesturehandler.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 
-# Add any project specific keep options here:
+# ---- Expo modules ----
+-keep class expo.modules.** { *; }
+-keep class host.exp.exponent.** { *; }
+-dontwarn expo.modules.**
+
+# ---- Firebase ----
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
+
+# ---- ResQ custom native modules ----
+-keep class com.anonymous.ResQ.** { *; }
+
+# ---- Kotlin coroutines & stdlib ----
+-dontwarn kotlinx.coroutines.**
+-keep class kotlin.** { *; }
+-keepattributes *Annotation*
+
+# ---- General reflection safety ----
+-keepattributes Signature
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
