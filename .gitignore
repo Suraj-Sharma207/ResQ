@@ -3,6 +3,10 @@
 # dependencies
 node_modules/
 
+# Gradle caches — never commit, causes EBUSY lock errors on EAS upload
+android/.gradle/
+.gradle/
+
 # Expo
 .expo/
 dist/
