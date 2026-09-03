@@ -1,7 +1,0 @@
-expo.modules.directsms.expo-direct-sms-pngs-0 D:\MajorProject\ResQ\modules\expo-direct-sms\android\build\generated\res\pngs\release
-expo.modules.directsms.expo-direct-sms-resValues-1 D:\MajorProject\ResQ\modules\expo-direct-sms\android\build\generated\res\resValues\release
-expo.modules.directsms.expo-direct-sms-mergeReleaseResources-2 D:\MajorProject\ResQ\modules\expo-direct-sms\android\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
-expo.modules.directsms.expo-direct-sms-mergeReleaseResources-3 D:\MajorProject\ResQ\modules\expo-direct-sms\android\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-expo.modules.directsms.expo-direct-sms-release-4 D:\MajorProject\ResQ\modules\expo-direct-sms\android\build\intermediates\merged_res\release\mergeReleaseResources
-expo.modules.directsms.expo-direct-sms-main-5 D:\MajorProject\ResQ\modules\expo-direct-sms\android\src\main\res
-expo.modules.directsms.expo-direct-sms-release-6 D:\MajorProject\ResQ\modules\expo-direct-sms\android\src\release\res
