@@ -15,7 +15,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
-    "expo": "~54.0.33",
+    "expo": "~54.0.38",
     "expo-audio": "~1.1.1",
     "expo-blur": "~15.0.8",
     "expo-build-properties": "~1.0.10",
@@ -54,7 +54,9 @@
   "overrides": {
     "node-forge": "^1.4.0",
     "postcss": "^8.5.31",
-    "decode-uri-component": "^0.5.1"
+    "decode-uri-component": "^0.5.1",
+    "protobufjs": "^7.5.5",
+    "websocket-driver": "^0.7.5"
   },
   "private": true
 }
