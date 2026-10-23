@@ -13,7 +13,6 @@ import {
   View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import useLocation from "../../hooks/useLocation";
-import useShake from "../../hooks/useShake";
 import { getLocalContacts } from "../../services/storageService";
 import { 
   setupBackgroundService, 

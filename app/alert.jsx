@@ -6,7 +6,6 @@ import { StyleSheet, Text, TouchableOpacity, Vibration, View } from "react-nativ
 import BackgroundTimer from "react-native-background-timer";
 
 import useLocation from "../hooks/useLocation";
-import { sendSOS } from "../services/sosService";
 import { getLocalContacts } from "../services/storageService";
 import { sendSMS } from "../services/smsService";
 
