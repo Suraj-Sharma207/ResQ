@@ -51,5 +51,10 @@
     "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
   },
+  "overrides": {
+    "node-forge": "^1.4.0",
+    "postcss": "^8.5.31",
+    "decode-uri-component": "^0.5.1"
+  },
   "private": true
 }
