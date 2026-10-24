@@ -6,12 +6,29 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const USER_GUIDE_SEEN_KEY = '@resq_user_guide_seen';
+
+const STEPS = [
+  {
+    number: '01',
+    title: 'Add Emergency Contacts',
+    description: 'Go to My Circle and add trusted family members, friends, or emergency contacts.',
+  },
+  {
+    number: '02',
+    title: 'Enable SOS Before Driving',
+    description: 'Turn on the SOS button on the Home screen. Make sure it turns green before you start driving.',
+  },
+  {
+    number: '03',
+    title: 'Keep Background Monitoring Active',
+    description: 'ResQ can monitor for accidents while you lock your phone or use navigation.',
+  },
+];
 
 export default function UserGuideModal({ visible, onClose }) {
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -37,145 +54,96 @@ export default function UserGuideModal({ visible, onClose }) {
     >
       <View style={styles.overlay}>
         <View style={styles.modalCard}>
-          {/* Header */}
+          {/* A. Compact Header */}
           <View style={styles.header}>
-            <View style={styles.headerTitleRow}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="shield-checkmark" size={24} color="#fff" />
-              </View>
-              <View style={styles.headerTextContainer}>
-                <Text style={styles.headerTitle}>User Manual & Safety Guide</Text>
-                <Text style={styles.headerSubtitle}>How ResQ protects you on the road</Text>
-              </View>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.headerTitle}>Safety Guide</Text>
+              <Text style={styles.headerSubtitle}>How ResQ protects you on the road</Text>
             </View>
-              {/* Close Button (X) */}
-              <TouchableOpacity
-                style={styles.closeIconButton}
-                onPress={handleClose}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                accessibilityLabel="Close User Guide"
-              >
-                <Ionicons name="close" size={24} color="#555" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Scrollable Content */}
-            <ScrollView
-              style={styles.contentScroll}
-              showsVerticalScrollIndicator={true}
-              contentContainerStyle={styles.scrollContent}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={handleClose}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Close Safety Guide"
+              accessibilityRole="button"
             >
-              {/* Privacy & Safety Badge */}
-              <View style={styles.safetyBadge}>
-                <Ionicons name="lock-closed" size={20} color="#2e7d32" />
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.safetyBadgeTitle}>100% Safe & Private</Text>
-                  <Text style={styles.safetyBadgeText}>
-                    ResQ operates completely on your phone. Your location and contacts are never uploaded or sold to external servers.
-                  </Text>
-                </View>
-              </View>
-
-              {/* Steps Section */}
-              <Text style={styles.sectionHeading}>How It Works (Step-by-Step)</Text>
-
-              <View style={styles.stepCard}>
-                <View style={styles.stepNumberBadge}>
-                  <Text style={styles.stepNumberText}>1</Text>
-                </View>
-                <View style={styles.stepTextContainer}>
-                  <Text style={styles.stepTitle}>Add Emergency Contacts</Text>
-                  <Text style={styles.stepDescription}>
-                    Go to the <Text style={styles.bold}>My Circle</Text> tab and save your trusted family members, friends, or emergency numbers.
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.stepCard}>
-                <View style={styles.stepNumberBadge}>
-                  <Text style={styles.stepNumberText}>2</Text>
-                </View>
-                <View style={styles.stepTextContainer}>
-                  <Text style={styles.stepTitle}>Turn SOS ON Before Driving</Text>
-                  <Text style={styles.stepDescription}>
-                    Tap the large SOS button on the Home screen to turn it <Text style={{ color: '#2e7d32', fontWeight: 'bold' }}>GREEN (ON)</Text>.
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.stepCard}>
-                <View style={styles.stepNumberBadge}>
-                  <Text style={styles.stepNumberText}>3</Text>
-                </View>
-                <View style={styles.stepTextContainer}>
-                  <Text style={styles.stepTitle}>Continuous Background Monitoring</Text>
-                  <Text style={styles.stepDescription}>
-                    You can lock your phone or use navigation. ResQ runs in the background, monitoring motion and sudden high-G deceleration.
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.stepCard}>
-                <View style={[styles.stepNumberBadge, { backgroundColor: '#ff5f5f' }]}>
-                  <Text style={styles.stepNumberText}>4</Text>
-                </View>
-                <View style={styles.stepTextContainer}>
-                  <Text style={styles.stepTitle}>Crash Detected: 30-Sec Countdown</Text>
-                  <Text style={styles.stepDescription}>
-                    If a severe impact is detected, the phone screen turns on, sounds an alarm, and starts a 30-second timer.
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.stepCard}>
-                <View style={[styles.stepNumberBadge, { backgroundColor: '#ff3b30' }]}>
-                  <Text style={styles.stepNumberText}>5</Text>
-                </View>
-                <View style={styles.stepTextContainer}>
-                  <Text style={styles.stepTitle}>Automatic Emergency SMS</Text>
-                  <Text style={styles.stepDescription}>
-                    If you are safe, press <Text style={styles.bold}>"Stop Alert"</Text>. If you are unresponsive and the 30 seconds expire, ResQ automatically dispatches an SMS with your live GPS location via SIM.
-                  </Text>
-                </View>
-              </View>
-
-              {/* Universal Lock Screen Display Tip */}
-              <View style={styles.tipBox}>
-                <Ionicons name="phone-portrait-outline" size={20} color="#ff6b4a" />
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.tipTitle}>Lock Screen Display Tip</Text>
-                  <Text style={styles.tipText}>
-                    To let the countdown timer pop up over your locked screen, ensure <Text style={styles.bold}>"Appear on top"</Text> (or "Display over other apps") is enabled in your phone Settings &gt; Apps &gt; ResQ.
-                  </Text>
-                </View>
-              </View>
-
-              {/* Don't show again toggle */}
-              <TouchableOpacity
-                style={styles.checkboxRow}
-                onPress={() => setDontShowAgain(!dontShowAgain)}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={dontShowAgain ? 'checkbox' : 'square-outline'}
-                  size={22}
-                  color={dontShowAgain ? '#ff6b4a' : '#888'}
-                />
-                <Text style={styles.checkboxLabel}>Don't show this guide automatically on launch</Text>
-              </TouchableOpacity>
-            </ScrollView>
-
-            {/* Bottom Close Button */}
-            <View style={styles.footer}>
-              <TouchableOpacity
-                style={styles.gotItButton}
-                onPress={handleClose}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.gotItButtonText}>Got It, I'm Ready!</Text>
-              </TouchableOpacity>
-            </View>
+              <Ionicons name="close" size={18} color="#64748B" />
+            </TouchableOpacity>
           </View>
+
+          {/* Scrollable Content */}
+          <ScrollView
+            style={styles.contentScroll}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* B. Minimal Privacy Banner */}
+            <View style={styles.privacyBanner}>
+              <Ionicons name="lock-closed" size={14} color="#059669" style={styles.privacyIcon} />
+              <View style={styles.privacyTextContainer}>
+                <Text style={styles.privacyHeading}>Your privacy matters</Text>
+                <Text style={styles.privacyText}>
+                  Your location and contacts stay on your device and are never sold.
+                </Text>
+              </View>
+            </View>
+
+            {/* C. Single Continuous Vertical Timeline */}
+            <View style={styles.timelineContainer}>
+              {STEPS.map((step, index) => {
+                const isLast = index === STEPS.length - 1;
+                return (
+                  <View key={step.number} style={styles.timelineRow}>
+                    {/* Connecting line between steps */}
+                    {!isLast && <View style={styles.connectingLine} />}
+
+                    {/* Step Number Badge */}
+                    <View style={styles.numberCircle}>
+                      <Text style={styles.numberText}>{step.number}</Text>
+                    </View>
+
+                    {/* Step Text */}
+                    <View style={[styles.stepContent, isLast && styles.stepContentLast]}>
+                      <Text style={styles.stepTitle}>{step.title}</Text>
+                      <Text style={styles.stepDescription}>{step.description}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* Subtle "Don't show again" toggle */}
+            <TouchableOpacity
+              style={styles.checkboxRow}
+              onPress={() => setDontShowAgain(!dontShowAgain)}
+              activeOpacity={0.7}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: dontShowAgain }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name={dontShowAgain ? 'checkbox' : 'square-outline'}
+                size={17}
+                color={dontShowAgain ? '#FF6347' : '#94A3B8'}
+              />
+              <Text style={styles.checkboxLabel}>Don't show this guide on launch</Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* D. Fixed Bottom Action */}
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={styles.ctaButton}
+              onPress={handleClose}
+              activeOpacity={0.85}
+              accessibilityLabel="Got It, I'm Ready"
+              accessibilityRole="button"
+            >
+              <Text style={styles.ctaButtonText}>Got It, I'm Ready</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </Modal>
   );
@@ -184,192 +152,180 @@ export default function UserGuideModal({ visible, onClose }) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
   },
   modalCard: {
-    width: '94%',
-    maxHeight: '82%',
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
+    width: '100%',
+    maxWidth: 390,
+    maxHeight: '85%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 8,
   },
   header: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 15,
+    paddingTop: 18,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#ff6b4a',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    borderBottomColor: '#F1F5F9',
   },
   headerTextContainer: {
     flex: 1,
+    paddingRight: 12,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#222',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: 12,
-    color: '#777',
+    fontSize: 13,
+    color: '#64748B',
     marginTop: 2,
-  },
-  closeIconButton: {
-    padding: 6,
-    borderRadius: 20,
-    backgroundColor: '#f2f2f2',
-    marginLeft: 8,
-  },
-  contentScroll: {
-    maxHeight: 460,
-  },
-  scrollContent: {
-    padding: 20,
-  },
-  safetyBadge: {
-    flexDirection: 'row',
-    backgroundColor: '#e8f5e9',
-    borderRadius: 14,
-    padding: 14,
-    alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#c8e6c9',
-  },
-  safetyBadgeTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#2e7d32',
-  },
-  safetyBadgeText: {
-    fontSize: 12,
-    color: '#388e3c',
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  sectionHeading: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  stepCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#f9f9fb',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#ececf2',
-  },
-  stepNumberBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ff8a5c',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
-  },
-  stepNumberText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  stepTextContainer: {
-    flex: 1,
-  },
-  stepTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#222',
-    marginBottom: 3,
-  },
-  stepDescription: {
-    fontSize: 12.5,
-    color: '#555',
     lineHeight: 18,
   },
-  bold: {
-    fontWeight: 'bold',
-    color: '#222',
-  },
-  tipBox: {
-    flexDirection: 'row',
-    backgroundColor: '#fff3e0',
-    borderRadius: 14,
-    padding: 14,
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
-    marginTop: 10,
+    justifyContent: 'center',
+  },
+  contentScroll: {
+    flexGrow: 0,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  privacyBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#ECFDF5',
     borderWidth: 1,
-    borderColor: '#ffe0b2',
+    borderColor: '#D1FAE5',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 20,
   },
-  tipTitle: {
+  privacyIcon: {
+    marginRight: 9,
+    marginTop: 1,
+  },
+  privacyTextContainer: {
+    flex: 1,
+  },
+  privacyHeading: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#e65100',
+    fontWeight: '600',
+    color: '#065F46',
+    marginBottom: 2,
+    letterSpacing: -0.1,
   },
-  tipText: {
+  privacyText: {
     fontSize: 12,
-    color: '#bf360c',
-    marginTop: 2,
+    color: '#047857',
     lineHeight: 16,
+  },
+  timelineContainer: {
+    marginBottom: 6,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    position: 'relative',
+  },
+  connectingLine: {
+    position: 'absolute',
+    left: 13,
+    top: 26,
+    bottom: 0,
+    width: 1.5,
+    backgroundColor: '#E2E8F0',
+  },
+  numberCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FF6347',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+    zIndex: 1,
+  },
+  numberText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  stepContent: {
+    flex: 1,
+    paddingBottom: 22,
+  },
+  stepContentLast: {
+    paddingBottom: 8,
+  },
+  stepTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0F172A',
+    marginBottom: 3,
+    letterSpacing: -0.2,
+    lineHeight: 20,
+    marginTop: 2,
+  },
+  stepDescription: {
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 18,
+    marginTop: 6,
+    marginBottom: 6,
     paddingVertical: 6,
   },
   checkboxLabel: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: 12.5,
+    color: '#64748B',
     marginLeft: 8,
   },
   footer: {
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    backgroundColor: '#fafafa',
+    borderTopColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
   },
-  gotItButton: {
-    backgroundColor: '#ff6b4a',
+  ctaButton: {
+    backgroundColor: '#FF6347',
     borderRadius: 14,
-    paddingVertical: 14,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gotItButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  ctaButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
 });

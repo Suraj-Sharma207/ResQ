@@ -57,7 +57,9 @@ export default function Alert() {
 
             const message = `EMERGENCY! I need help. My location: ${mapLink}`;
 
-            console.log("Sending Auto-SMS to:", phoneNumbers);
+            if (__DEV__) {
+              console.log(`[Alert] Sending Auto-SMS to ${phoneNumbers.length} emergency contact(s)`);
+            }
             sendSMS(phoneNumbers, message);
           }
 

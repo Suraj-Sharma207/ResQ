@@ -3,6 +3,7 @@ import expo.modules.splashscreen.SplashScreenManager
 
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -25,6 +26,17 @@ class MainActivity : ReactActivity() {
     // @generated end expo-splashscreen
     turnScreenOnAndShowWhenLocked()
     super.onCreate(null)
+  }
+
+  override fun onNewIntent(intent: Intent?) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    turnScreenOnAndShowWhenLocked()
+  }
+
+  override fun onResume() {
+    super.onResume()
+    turnScreenOnAndShowWhenLocked()
   }
 
   override fun onAttachedToWindow() {

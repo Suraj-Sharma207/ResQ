@@ -42,7 +42,9 @@ TaskManager.defineTask(SOS_TASK_NAME, async ({ data, error }) => {
           const phoneNumbers = contacts.map(c => c.phone);
           sendSMS(phoneNumbers, message);
           
-          console.log("Background SMS Dispatched to:", phoneNumbers);
+          if (__DEV__) {
+            console.log(`[Background] Emergency SMS Dispatched to ${phoneNumbers.length} contact(s)`);
+          }
         }
       } catch (err) {
         console.error("Failed to send background SMS", err);

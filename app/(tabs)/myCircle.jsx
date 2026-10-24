@@ -8,6 +8,7 @@ export default function MyCircle() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [contacts, setContacts] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Load contacts the second the screen opens
   useEffect(() => {
@@ -20,41 +21,48 @@ export default function MyCircle() {
     setContacts(localContacts);
   };
 
-  // --- 2. ADD CONTACT (Local Storage) ---
+  // --- 2. ADD CONTACT (Atomic Read-Modify-Write) ---
   const addContact = async () => {
-    if (!name.trim() || !phone.trim()) return;
+    if (!name.trim() || !phone.trim() || isProcessing) return;
 
-    // Create a new contact object with a unique timestamp ID
-    const newContact = {
-      id: Date.now().toString(), 
-      name: name.trim(),
-      phone: phone.trim(),
-    };
+    setIsProcessing(true);
+    try {
+      // Atomic read: get freshest persistent list before appending
+      const current = await getLocalContacts();
+      const newContact = {
+        id: Date.now().toString(), 
+        name: name.trim(),
+        phone: phone.trim(),
+      };
 
-    // Add it to our current list
-    const updatedContacts = [...contacts, newContact];
-    
-    // Instantly update the UI
-    setContacts(updatedContacts);
-    
-    // Save the new list directly to the phone's hard drive
-    await saveLocalContacts(updatedContacts);
-
-    // Clear the input boxes
-    setName("");
-    setPhone("");
+      const updated = [...current, newContact];
+      await saveLocalContacts(updated);
+      setContacts(updated);
+      setName("");
+      setPhone("");
+    } catch (e) {
+      console.error("Failed to add contact", e);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  // --- 3. DELETE CONTACT (Local Storage) ---
+  // --- 3. DELETE CONTACT (Atomic Read-Modify-Write) ---
   const deleteContact = async (id) => {
-    // Filter out the contact we want to delete
-    const updatedContacts = contacts.filter((contact) => contact.id !== id);
-    
-    // Instantly update the UI
-    setContacts(updatedContacts);
-    
-    // Save the new filtered list to the phone
-    await saveLocalContacts(updatedContacts);
+    if (isProcessing) return;
+
+    setIsProcessing(true);
+    try {
+      // Atomic read: get freshest persistent list before filtering
+      const current = await getLocalContacts();
+      const updated = current.filter((c) => c.id !== id);
+      await saveLocalContacts(updated);
+      setContacts(updated);
+    } catch (e) {
+      console.error("Failed to delete contact", e);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -68,6 +76,7 @@ export default function MyCircle() {
         value={name}
         onChangeText={setName}
         style={styles.input}
+        editable={!isProcessing}
       />
 
       <TextInput
@@ -76,10 +85,17 @@ export default function MyCircle() {
         onChangeText={setPhone}
         style={styles.input}
         keyboardType="phone-pad"
+        editable={!isProcessing}
       />
 
-      <TouchableOpacity style={styles.addBtn} onPress={addContact}>
-        <Text style={styles.btnText}>Add Contact</Text>
+      <TouchableOpacity 
+        style={[styles.addBtn, isProcessing && { opacity: 0.6 }]} 
+        onPress={addContact}
+        disabled={isProcessing}
+      >
+        <Text style={styles.btnText}>
+          {isProcessing ? "Saving..." : "Add Contact"}
+        </Text>
       </TouchableOpacity>
 
       {/* Contact List */}
@@ -93,8 +109,12 @@ export default function MyCircle() {
               <Text style={styles.phone}>{item.phone}</Text>
             </View>
 
-            <TouchableOpacity onPress={() => deleteContact(item.id)}>
-              <Text style={styles.delete}>Delete</Text>
+            <TouchableOpacity 
+              onPress={() => deleteContact(item.id)}
+              disabled={isProcessing}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={[styles.delete, isProcessing && { opacity: 0.5 }]}>Delete</Text>
             </TouchableOpacity>
           </View>
         )}

@@ -30,6 +30,7 @@ export default function EditProfile() {
     note: "",
     photo: "",
   });
+  const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -62,17 +63,22 @@ export default function EditProfile() {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+
     if (!userData.name.trim() || !userData.phone.trim()) {
       Alert.alert("Required Fields", "Please provide a Name and Phone Number.");
       return;
     }
 
+    setIsSaving(true);
     try {
       await saveLocalProfile(userData);
       router.back();
     } catch (e) {
       console.log(e);
       Alert.alert("Error", "Could not save profile.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -203,8 +209,14 @@ export default function EditProfile() {
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Text style={styles.saveBtnText}>Save Changes</Text>
+              <TouchableOpacity 
+                style={[styles.saveBtn, isSaving && { opacity: 0.7 }]} 
+                onPress={handleSave}
+                disabled={isSaving}
+              >
+                <Text style={styles.saveBtnText}>
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </Text>
               </TouchableOpacity>
 
             </View>

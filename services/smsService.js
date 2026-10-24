@@ -13,16 +13,26 @@ export const sendSMS = async (contacts, message) => {
       const finalMessage = message || "Emergency Alert from ResQ!";
 
       try {
-        // Call your custom Kotlin code!
+        // Call custom native SMS module
         await sendDirectSms(cleanNumber, finalMessage);
-        console.log(`Successfully silently sent to ${cleanNumber}`);
-        //alert(`SMS sent from ${cleanNumber}`)
+        if (__DEV__) {
+          const masked = cleanNumber.length > 4 
+            ? `${cleanNumber.slice(0, 3)}****${cleanNumber.slice(-2)}`
+            : "****";
+          console.log(`[SMS] Successfully dispatched alert to ${masked}`);
+        }
       } catch (err) {
-        console.log(`Failed for ${cleanNumber}:`, err);
-        // alert(`SMS faild from ${cleanNumber}`,err)
+        if (__DEV__) {
+          const masked = cleanNumber.length > 4 
+            ? `${cleanNumber.slice(0, 3)}****${cleanNumber.slice(-2)}`
+            : "****";
+          console.warn(`[SMS] Dispatch failed for ${masked}:`, err?.message || err);
+        }
       }
     });
   } catch (error) {
-    console.error("Service error:", error);
+    if (__DEV__) {
+      console.error("SMS Service error:", error);
+    }
   }
 };
