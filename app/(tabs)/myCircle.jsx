@@ -1,7 +1,16 @@
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from "react-native";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-// 1. Import our new local storage service instead of Firebase
+import { Ionicons } from "@expo/vector-icons";
 import { getLocalContacts, saveLocalContacts } from "../../services/storageService";
 
 export default function MyCircle() {
@@ -10,7 +19,7 @@ export default function MyCircle() {
   const [contacts, setContacts] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Load contacts the second the screen opens
+  // Load contacts when the screen opens
   useEffect(() => {
     fetchContacts();
   }, []);
@@ -27,10 +36,9 @@ export default function MyCircle() {
 
     setIsProcessing(true);
     try {
-      // Atomic read: get freshest persistent list before appending
       const current = await getLocalContacts();
       const newContact = {
-        id: Date.now().toString(), 
+        id: Date.now().toString(),
         name: name.trim(),
         phone: phone.trim(),
       };
@@ -53,7 +61,6 @@ export default function MyCircle() {
 
     setIsProcessing(true);
     try {
-      // Atomic read: get freshest persistent list before filtering
       const current = await getLocalContacts();
       const updated = current.filter((c) => c.id !== id);
       await saveLocalContacts(updated);
@@ -66,112 +73,301 @@ export default function MyCircle() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      
-      <Text style={styles.title}>Add Contacts</Text>
+    <View style={styles.screen}>
+      {/* Subtle background decorative shapes matching the reference */}
+      <View style={styles.decorCircleTop1} pointerEvents="none" />
+      <View style={styles.decorCircleTop2} pointerEvents="none" />
+      <View style={styles.decorCircleBottom} pointerEvents="none" />
 
-      {/* Add Contact */}
-      <TextInput
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
-        editable={!isProcessing}
-      />
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.keyboardAvoid}
+        >
+          {/* Header section with horizontal accent line */}
+          <View style={styles.header}>
+            <View style={styles.accentBar} />
+            <Text style={styles.title}>Add Contacts</Text>
+            <Text style={styles.subtitle}>
+              Save contact details to stay connected
+            </Text>
+          </View>
 
-      <TextInput
-        placeholder="Phone (+91...)"
-        value={phone}
-        onChangeText={setPhone}
-        style={styles.input}
-        keyboardType="phone-pad"
-        editable={!isProcessing}
-      />
-
-      <TouchableOpacity 
-        style={[styles.addBtn, isProcessing && { opacity: 0.6 }]} 
-        onPress={addContact}
-        disabled={isProcessing}
-      >
-        <Text style={styles.btnText}>
-          {isProcessing ? "Saving..." : "Add Contact"}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Contact List */}
-      <FlatList
-        data={contacts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.phone}>{item.phone}</Text>
+          {/* Form section */}
+          <View style={styles.formContainer}>
+            {/* Name Input with icon and divider */}
+            <View style={styles.inputRow}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="person-outline" size={20} color="#ffffff" />
+              </View>
+              <View style={styles.divider} />
+              <TextInput
+                placeholder="Name"
+                placeholderTextColor="rgba(255, 255, 255, 0.65)"
+                value={name}
+                onChangeText={setName}
+                style={styles.textInput}
+                editable={!isProcessing}
+                autoCapitalize="words"
+              />
             </View>
 
-            <TouchableOpacity 
-              onPress={() => deleteContact(item.id)}
+            {/* Phone Input with icon and divider */}
+            <View style={styles.inputRow}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="call-outline" size={20} color="#ffffff" />
+              </View>
+              <View style={styles.divider} />
+              <TextInput
+                placeholder="Phone (+91...)"
+                placeholderTextColor="rgba(255, 255, 255, 0.65)"
+                value={phone}
+                onChangeText={setPhone}
+                style={styles.textInput}
+                keyboardType="phone-pad"
+                editable={!isProcessing}
+              />
+            </View>
+
+            {/* Add Contact Button */}
+            <TouchableOpacity
+              style={[styles.addBtn, isProcessing && styles.addBtnDisabled]}
+              onPress={addContact}
               disabled={isProcessing}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.88}
             >
-              <Text style={[styles.delete, isProcessing && { opacity: 0.5 }]}>Delete</Text>
+              <Text style={styles.addBtnText}>
+                {isProcessing ? "Saving..." : "Add Contact"}
+              </Text>
             </TouchableOpacity>
           </View>
-        )}
-      />
 
-    </SafeAreaView>
+          {/* Saved Contacts Section */}
+          {contacts.length > 0 && (
+            <View style={styles.contactsSection}>
+              <Text style={styles.contactsSectionTitle}>
+                Saved Contacts ({contacts.length})
+              </Text>
+              <FlatList
+                data={contacts}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.listContent}
+                renderItem={({ item }) => (
+                  <View style={styles.contactCard}>
+                    <View style={styles.avatarMini}>
+                      <Ionicons name="person" size={16} color="#ff7043" />
+                    </View>
+                    <View style={styles.contactInfo}>
+                      <Text style={styles.contactName} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Text style={styles.contactPhone}>{item.phone}</Text>
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={() => deleteContact(item.id)}
+                      disabled={isProcessing}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={styles.deleteBtn}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={17}
+                        color="rgba(255, 255, 255, 0.9)"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            </View>
+          )}
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
-// Keep your existing styles exactly as they are!
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#ff8a5c",
+    backgroundColor: "#ff7043", // Warm coral-orange matching the reference image
+  },
+  safeArea: {
+    flex: 1,
+  },
+  keyboardAvoid: {
+    flex: 1,
+    paddingHorizontal: 22,
+    paddingTop: 16,
+  },
+
+  // Subtle background watermark shapes
+  decorCircleTop1: {
+    position: "absolute",
+    top: -70,
+    right: -70,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    borderWidth: 32,
+    borderColor: "rgba(255, 255, 255, 0.07)",
+  },
+  decorCircleTop2: {
+    position: "absolute",
+    top: 75,
+    right: 45,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+  },
+  decorCircleBottom: {
+    position: "absolute",
+    bottom: 80,
+    left: -80,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    borderWidth: 28,
+    borderColor: "rgba(255, 255, 255, 0.06)",
+  },
+
+  // Header styles
+  header: {
+    marginBottom: 24,
+  },
+  accentBar: {
+    width: 44,
+    height: 3.5,
+    borderRadius: 2,
+    backgroundColor: "#ffffff",
+    marginBottom: 12,
+    opacity: 0.95,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#ffffff",
+    letterSpacing: 0.2,
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.88)",
+    fontWeight: "400",
+    lineHeight: 20,
+  },
+
+  // Form styles
+  formContainer: {
     marginBottom: 20,
-    color: "#fff",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#272424",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 52,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.55)",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    marginBottom: 14,
   },
+  iconContainer: {
+    width: 26,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  divider: {
+    width: 1,
+    height: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    marginHorizontal: 10,
+  },
+  textInput: {
+    flex: 1,
+    height: "100%",
+    color: "#ffffff",
+    fontSize: 15,
+    paddingVertical: 0,
+  },
+
+  // Add Contact Button
   addBtn: {
     backgroundColor: "#ffffff",
-    padding: 14,
-    borderRadius: 10,
+    height: 52,
+    borderRadius: 16,
     alignItems: "center",
-    marginBottom: 20,
+    justifyContent: "center",
+    marginTop: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  btnText: {
-    color: "#020202",
-    fontWeight: "bold",
+  addBtnDisabled: {
+    opacity: 0.75,
   },
-  card: {
+  addBtnText: {
+    color: "#262626",
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+
+  // Contacts List Section
+  contactsSection: {
+    flex: 1,
+    marginTop: 10,
+  },
+  contactsSectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "rgba(255, 255, 255, 0.9)",
+    marginBottom: 10,
+    letterSpacing: 0.2,
+  },
+  listContent: {
+    paddingBottom: 110, // Prevents bottom floating tab bar from obscuring items
+  },
+  contactCard: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#f5f5f5",
-    padding: 15,
-    borderRadius: 10,
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.28)",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     marginBottom: 10,
   },
-  name: {
-    fontSize: 16,
-    fontWeight: "bold",
+  avatarMini: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
   },
-  phone: {
-    color: "#555",
+  contactInfo: {
+    flex: 1,
   },
-  delete: {
-    color: "red",
-    fontWeight: "bold",
+  contactName: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  contactPhone: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 13,
+    marginTop: 2,
+  },
+  deleteBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.12)",
   },
 });

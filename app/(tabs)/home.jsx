@@ -33,6 +33,22 @@ export default function Home() {
   // 1 = expanded ("How it works ?"), 0 = collapsed ("?")
   const guideCollapseAnim = useRef(new Animated.Value(1)).current;
 
+  // Dynamic background color animation: transitions smoothly between myCircle coral (#ff7043) and active green (#39d12f)
+  const bgAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(bgAnim, {
+      toValue: isOn ? 1 : 0,
+      duration: 350,
+      useNativeDriver: false,
+    }).start();
+  }, [isOn]);
+
+  const dynamicBgColor = bgAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["#ff7043", "#39d12f"],
+  });
+
   useEffect(() => {
     // Keep expanded for 3 seconds, then smoothly animate text into the ? button
     const collapseTimer = setTimeout(() => {
@@ -151,7 +167,11 @@ export default function Home() {
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: isOn ? "#39d12f" : "#ff8a5c" }]}>
+    <Animated.View style={[styles.container, { backgroundColor: dynamicBgColor }]}>
+      {/* Subtle background decorative watermark shapes matching myCircle */}
+      <View style={styles.decorCircleTop1} pointerEvents="none" />
+      <View style={styles.decorCircleTop2} pointerEvents="none" />
+      <View style={styles.decorCircleBottom} pointerEvents="none" />
 
       {/* Location & Guide Header */}
       <View style={styles.topSection}>
@@ -223,7 +243,7 @@ export default function Home() {
         onClose={() => setGuideVisible(false)}
       />
 
-    </View>
+    </Animated.View>
   );
 }
 
@@ -231,6 +251,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingBottom: 100, // space for tab bar
+  },
+
+  // Subtle background watermark shapes (matching myCircle)
+  decorCircleTop1: {
+    position: "absolute",
+    top: -70,
+    right: -70,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    borderWidth: 32,
+    borderColor: "rgba(255, 255, 255, 0.07)",
+  },
+  decorCircleTop2: {
+    position: "absolute",
+    top: 75,
+    right: 45,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+  },
+  decorCircleBottom: {
+    position: "absolute",
+    bottom: 80,
+    left: -80,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    borderWidth: 28,
+    borderColor: "rgba(255, 255, 255, 0.06)",
   },
 
   topSection: {
