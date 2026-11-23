@@ -50,6 +50,7 @@ export default function EditProfile() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
+      // MediaType is a string-literal union in expo-image-picker; use it directly.
       mediaTypes: ["images"],
       quality: 0.7,
     });
