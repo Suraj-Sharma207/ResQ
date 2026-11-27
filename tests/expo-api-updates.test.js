@@ -12,7 +12,7 @@ const EXPECTED_VERSIONS = {
   "expo-blur": "58.0.6",
   "expo-image-picker": "58.0.10",
   "expo-linear-gradient": "58.0.4",
-  "expo-location": "58.0.22",
+  "expo-location": "58.0.23",
   "expo-task-manager": "58.0.14",
 };
 
