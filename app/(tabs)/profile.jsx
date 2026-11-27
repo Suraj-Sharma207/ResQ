@@ -208,7 +208,8 @@ export default function Profile() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaType?.Images || ImagePicker.MediaTypeOptions?.Images,
+        // MediaType is a string-literal union in expo-image-picker; use it directly.
+        mediaTypes: ["images"],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
